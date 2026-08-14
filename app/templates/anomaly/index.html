@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Anomaly detection · {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Anomaly detection</h2>
+        <p class="text-muted">{{ dataset.name }}</p>
+    </div>
+
+    {% if not numeric_columns %}
+        {% set title = "No numeric columns" %}
+        {% set subtitle = "Anomaly detection needs at least one numeric column." %}
+        {% set icon = "bi-shield-exclamation" %}
+        {% include "partials/empty_state.html" with context %}
+    {% else %}
+    <div class="chart-builder-layout">
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Configuration</h5></div>
+
+            <div class="mb-3">
+                <label class="form-label">Method</label>
+                <select class="form-select form-select-sm" id="methodSelect">
+                    <option value="iqr">IQR (interquartile range)</option>
+                    <option value="zscore">Z-score</option>
+                    <option value="isolation_forest">Isolation Forest (multivariate)</option>
+                </select>
+                <p class="text-muted small mt-1 mb-0" id="methodHint"></p>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Columns</label>
+                {% for col in numeric_columns %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="anomaly_column" value="{{ col }}" id="col_{{ loop.index }}" {% if loop.index <= 1 %}checked{% endif %}>
+                        <label class="form-check-label" for="col_{{ loop.index }}">{{ col }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3 d-none" id="thresholdWrapper">
+                <label class="form-label">Z-score threshold</label>
+                <input type="number" class="form-control form-control-sm" id="thresholdInput" value="3.0" step="0.1" min="1">
+            </div>
+
+            <div class="mb-3 d-none" id="contaminationWrapper">
+                <label class="form-label">Expected anomaly rate</label>
+                <input type="number" class="form-control form-control-sm" id="contaminationInput" value="0.05" step="0.01" min="0.01" max="0.5">
+            </div>
+
+            <button type="button" class="btn btn-primary w-100" id="runBtn">
+                <i class="bi bi-search"></i> Run detection
+            </button>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Results</h5></div>
+            <div id="resultsLoading" class="d-none">{% include "partials/loading_state.html" %}</div>
+            <div id="resultsError" class="alert alert-danger d-none"></div>
+
+            <div id="resultsContent" class="d-none">
+                <div class="stat-grid mb-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-shield-exclamation"></i></div>
+                        <div><div class="stat-value" id="anomalyCount">0</div><div class="stat-label">Anomalies found</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon bg-secondary-subtle text-secondary"><i class="bi bi-table"></i></div>
+                        <div><div class="stat-value" id="rowsAnalyzed">0</div><div class="stat-label">Rows analyzed</div></div>
+                    </div>
+                </div>
+
+                <div class="chart-canvas-wrapper mb-3" id="anomalyChartWrapper">
+                    <canvas id="anomalyChart"></canvas>
+                </div>
+
+                <div id="truncatedNote" class="alert alert-info small d-none"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm" id="anomalyTable">
+                        <thead><tr id="anomalyTableHead"></tr></thead>
+                        <tbody id="anomalyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+    const ANOMALY_DETECT_URL = "{{ url_for('anomaly.detect', dataset_id=dataset.id) }}";
+</script>
+<script src="{{ url_for('static', filename='js/anomaly.js') }}"></script>
+{% endblock %}

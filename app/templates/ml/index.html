@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}ML Models · {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Machine Learning</h2>
+        <p class="text-muted">{{ dataset.name }}</p>
+    </div>
+
+    <div class="chart-builder-layout">
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Train a new model</h5></div>
+
+            <div class="mb-3">
+                <label class="form-label">Target column (what to predict)</label>
+                <select class="form-select form-select-sm" id="targetColumn">
+                    {% for col in columns %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                </select>
+                <p class="text-muted small mt-1 mb-0">Classification or regression is detected automatically based on this column.</p>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label d-flex justify-content-between">
+                    Feature columns
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="selectAllBtn">Select all</button>
+                </label>
+                <div class="feature-checklist" id="featureChecklist">
+                    {% for col in columns %}
+                        <div class="form-check">
+                            <input class="form-check-input feature-checkbox" type="checkbox" value="{{ col }}" id="feat_{{ loop.index }}" checked>
+                            <label class="form-check-label" for="feat_{{ loop.index }}">{{ col }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary w-100" id="trainBtn">
+                <i class="bi bi-play-fill"></i> Train models
+            </button>
+            <div id="trainError" class="alert alert-danger d-none mt-2"></div>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Training progress</h5></div>
+            <div id="progressEmpty" class="text-muted small">Select a target column and click "Train models" to compare algorithms.</div>
+            <div id="progressList" class="d-none"></div>
+        </div>
+    </div>
+
+    <div class="card-panel mt-3">
+        <div class="card-panel-header"><h5>Trained models</h5></div>
+        {% if models %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>Algorithm</th><th>Target</th><th>Task</th><th>Status</th><th>Score</th><th>Best</th><th></th></tr></thead>
+                    <tbody>
+                        {% for m in models %}
+                            <tr>
+                                <td><a href="{{ url_for('ml.model_detail', model_id=m.id) }}">{{ m.algorithm }}</a></td>
+                                <td>{{ m.target_column }}</td>
+                                <td><span class="badge text-bg-light border">{{ m.task_type }}</span></td>
+                                <td>
+                                    {% if m.status == 'completed' %}<span class="badge text-bg-success">completed</span>
+                                    {% elif m.status == 'failed' %}<span class="badge text-bg-danger">failed</span>
+                                    {% elif m.status == 'running' %}<span class="badge text-bg-warning">running</span>
+                                    {% else %}<span class="badge text-bg-secondary">pending</span>{% endif %}
+                                </td>
+                                <td>
+                                    {% if m.metrics_json %}
+                                        {% set metrics = m.metrics_json | from_json %}
+                                        {% if m.task_type == 'classification' %}{{ metrics.accuracy }}{% else %}{{ metrics.r2 }}{% endif %}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>{% if m.is_best_model %}<i class="bi bi-star-fill text-warning"></i>{% endif %}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('ml.model_delete', model_id=m.id) }}" onsubmit="return confirm('Delete this model?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            {% set title = "No models trained yet" %}
+            {% set subtitle = "Select a target column above and train your first models." %}
+            {% set icon = "bi-cpu" %}
+            {% include "partials/empty_state.html" with context %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const ML_TRAIN_URL = "{{ url_for('ml.train', dataset_id=dataset.id) }}";
+    const ML_STATUS_URL = "{{ url_for('ml.status', dataset_id=dataset.id) }}";
+</script>
+<script src="{{ url_for('static', filename='js/ml_train.js') }}"></script>
+{% endblock %}

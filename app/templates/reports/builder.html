@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Generate report · {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Generate report</h2>
+        <p class="text-muted">{{ dataset.name }}</p>
+    </div>
+
+    <div class="card-panel mb-3">
+        <div class="card-panel-header"><h5>What will be included</h5></div>
+        <ul class="list-clean">
+            <li><i class="bi bi-check-circle-fill text-success me-2"></i>Dataset overview &amp; data quality summary</li>
+            <li><i class="bi bi-check-circle-fill text-success me-2"></i>Exploratory statistics (numeric &amp; categorical)</li>
+            <li>
+                {% if chart_count > 0 %}<i class="bi bi-check-circle-fill text-success me-2"></i>{{ chart_count }} saved chart(s)
+                {% else %}<i class="bi bi-dash-circle text-muted me-2"></i>No saved charts yet <a href="{{ url_for('analytics.chart_builder', dataset_id=dataset.id) }}">— build one</a>{% endif %}
+            </li>
+            <li>
+                {% if has_insights %}<i class="bi bi-check-circle-fill text-success me-2"></i>AI-generated insights
+                {% else %}<i class="bi bi-dash-circle text-muted me-2"></i>No AI insights generated yet <a href="{{ url_for('ai_analyst.insights', dataset_id=dataset.id) }}">— generate some</a>{% endif %}
+            </li>
+            <li>
+                {% if best_model %}<i class="bi bi-check-circle-fill text-success me-2"></i>Best ML model: {{ best_model.algorithm }}
+                {% else %}<i class="bi bi-dash-circle text-muted me-2"></i>No trained ML model yet <a href="{{ url_for('ml.index', dataset_id=dataset.id) }}">— train one</a>{% endif %}
+            </li>
+            <li><i class="bi bi-check-circle-fill text-success me-2"></i>Recommendations (generated automatically from the above)</li>
+        </ul>
+    </div>
+
+    <div class="card-panel narrow-form">
+        <form method="POST" action="{{ url_for('reports.generate', dataset_id=dataset.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+                <label class="form-label">Report title</label>
+                <input type="text" name="title" class="form-control" value="{{ dataset.name }} Report">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Format</label>
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="format" value="pdf" id="fmtPdf" checked>
+                        <label class="form-check-label" for="fmtPdf">PDF</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="format" value="xlsx" id="fmtXlsx">
+                        <label class="form-check-label" for="fmtXlsx">Excel</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="format" value="csv" id="fmtCsv">
+                        <label class="form-check-label" for="fmtCsv">CSV</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="format" value="json" id="fmtJson">
+                        <label class="form-check-label" for="fmtJson">JSON</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary"><i class="bi bi-file-earmark-arrow-down"></i> Generate report</button>
+            <a href="{{ url_for('datasets.detail', dataset_id=dataset.id) }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

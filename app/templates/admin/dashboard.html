@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Admin · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Admin</h2>
+        <p class="text-muted">Platform-wide statistics and controls.</p>
+    </div>
+
+    {% include "admin/_nav.html" %}
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-people-fill"></i></div>
+            <div><div class="stat-value">{{ total_users }}</div><div class="stat-label">Total users</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-person-check-fill"></i></div>
+            <div><div class="stat-value">{{ active_users }}</div><div class="stat-label">Active users</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-folder-fill"></i></div>
+            <div><div class="stat-value">{{ dataset_count }}</div><div class="stat-label">Datasets</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-secondary-subtle text-secondary"><i class="bi bi-robot"></i></div>
+            <div><div class="stat-value">{{ ai_requests }}</div><div class="stat-label">AI requests</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div><div class="stat-value">{{ failed_ai_requests }}</div><div class="stat-label">Failed AI requests</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-plug-fill"></i></div>
+            <div><div class="stat-value">{{ configured_providers|length }}</div><div class="stat-label">Configured AI providers</div></div>
+        </div>
+    </div>
+
+    <div class="card-panel">
+        <div class="card-panel-header"><h5>AI requests by provider</h5></div>
+        {% if provider_usage %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Provider</th><th>Requests</th></tr></thead>
+                    <tbody>
+                        {% for provider, count in provider_usage %}
+                            <tr><td>{{ provider }}</td><td>{{ count }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted small mb-0">No AI requests recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

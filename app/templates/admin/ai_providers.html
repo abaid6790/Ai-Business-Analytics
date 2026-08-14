@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}AI Providers · Admin · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Admin</h2>
+        <p class="text-muted">AI provider status and configuration.</p>
+    </div>
+
+    {% include "admin/_nav.html" %}
+
+    <div class="card-panel mb-3">
+        <div class="card-panel-header"><h5>Configured providers</h5></div>
+        {% if configured_providers %}
+            <div class="d-flex flex-wrap gap-2">
+                {% for p in configured_providers %}
+                    <span class="badge text-bg-success">{{ p }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted small mb-0">No AI providers are configured. Add an API key to your environment (e.g. <code>GEMINI_API_KEY_1</code>).</p>
+        {% endif %}
+        <p class="text-muted small mt-2 mb-0">Current fallback order: {{ provider_order|join(' \u2192 ') }}</p>
+    </div>
+
+    {% if gemini_stats %}
+    <div class="card-panel mb-3">
+        <div class="card-panel-header"><h5>Gemini key pool</h5></div>
+        <p class="text-muted small">Keys are never shown in full \u2014 only the last 4 characters, for identification.</p>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Key</th><th>Requests</th><th>Failures</th><th>Rate-limit events</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for k in gemini_stats %}
+                        <tr>
+                            <td><code>...{{ k.key_suffix }}</code></td>
+                            <td>{{ k.requests }}</td>
+                            <td>{{ k.failures }}</td>
+                            <td>{{ k.rate_limit_events }}</td>
+                            <td>
+                                {% if k.in_cooldown %}<span class="badge text-bg-warning">cooldown</span>
+                                {% else %}<span class="badge text-bg-success">available</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card-panel mb-3">
+        <div class="card-panel-header"><h5>Usage &amp; failures by provider</h5></div>
+        {% if usage_by_provider %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Provider</th><th>Total requests</th><th>Failed</th></tr></thead>
+                    <tbody>
+                        {% for provider, total, failed in usage_by_provider %}
+                            <tr><td>{{ provider }}</td><td>{{ total }}</td><td>{{ failed or 0 }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted small mb-0">No requests recorded yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Usage limits per user</h5></div>
+            <form method="POST" action="{{ url_for('admin.update_limits') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">Daily request limit</label>
+                    <input type="number" name="daily_limit" class="form-control form-control-sm" value="{{ daily_limit }}" min="1" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Monthly request limit</label>
+                    <input type="number" name="monthly_limit" class="form-control form-control-sm" value="{{ monthly_limit }}" min="1" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save limits</button>
+            </form>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Provider fallback order</h5></div>
+            <p class="text-muted small">Comma-separated, in priority order. Available: {{ known_provider_names|join(', ') }}</p>
+            <form method="POST" action="{{ url_for('admin.update_order') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <input type="text" name="provider_order" class="form-control form-control-sm" value="{{ provider_order|join(', ') }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save order</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "partials/form_macros.html" import render_field, render_password_field %}
+{% block title %}Create account · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h2>Create your account</h2>
+        <p class="text-muted">Start analyzing your data with AI in minutes.</p>
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            {{ render_field(form.full_name) }}
+            {{ render_field(form.email, extra_class="") }}
+            {{ render_password_field(form.password) }}
+            {{ render_password_field(form.confirm_password) }}
+            {{ form.submit(class="btn btn-primary w-100") }}
+        </form>
+
+        <p class="auth-footer-text">
+            Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

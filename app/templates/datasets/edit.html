@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "partials/form_macros.html" import render_field %}
+{% block title %}Edit {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header"><h2>Edit dataset</h2></div>
+    <div class="card-panel narrow-form">
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            {{ render_field(form.name) }}
+            <div class="mb-3">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control", rows=3) }}
+            </div>
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('datasets.detail', dataset_id=dataset.id) }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

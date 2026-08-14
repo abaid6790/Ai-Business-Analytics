@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}{{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h2>{{ dataset.name }}</h2>
+            <p class="text-muted mb-0">{{ dataset.original_filename }} &middot; uploaded {{ dataset.created_at.strftime("%b %d, %Y") }}</p>
+            {% if dataset.description %}<p class="text-muted">{{ dataset.description }}</p>{% endif %}
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('ai_analyst.chat', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-robot"></i> Ask AI
+            </a>
+            <a href="{{ url_for('ai_analyst.insights', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-lightbulb-fill"></i> Insights
+            </a>
+            <a href="{{ url_for('reports.builder', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-file-earmark-text-fill"></i> Generate report
+            </a>
+            <a href="{{ url_for('ml.index', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-cpu-fill"></i> Train ML model
+            </a>
+            {% if datetime_cols and numeric_cols %}
+            <a href="{{ url_for('forecasting.index', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-clock-history"></i> Forecast
+            </a>
+            {% endif %}
+            <a href="{{ url_for('anomaly.index', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-shield-exclamation"></i> Detect anomalies
+            </a>
+            <a href="{{ url_for('analytics.eda', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-graph-up-arrow"></i> Explore data
+            </a>
+            <a href="{{ url_for('analytics.chart_builder', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-bar-chart-fill"></i> Build chart
+            </a>
+            <a href="{{ url_for('analytics.chart_list', dataset_id=dataset.id) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-collection"></i> Saved charts
+            </a>
+            {% if not dataset.is_cleaned_copy %}
+            <a href="{{ url_for('datasets.clean', dataset_id=dataset.id) }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-magic"></i> Clean data
+            </a>
+            {% endif %}
+            <a href="{{ url_for('datasets.edit', dataset_id=dataset.id) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-pencil-fill"></i> Edit
+            </a>
+            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash-fill"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    {% if dataset.is_cleaned_copy and dataset.source_dataset %}
+        <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span><i class="bi bi-info-circle-fill me-1"></i> This is a cleaned copy of
+                <a href="{{ url_for('datasets.detail', dataset_id=dataset.source_dataset.id) }}">{{ dataset.source_dataset.name }}</a>.
+                The original was never modified.</span>
+            <a href="{{ url_for('datasets.compare', dataset_id=dataset.id) }}" class="btn btn-sm btn-outline-primary">View before/after</a>
+        </div>
+    {% endif %}
+
+    {% set cleaned_children = dataset.cleaned_versions %}
+    {% if cleaned_children and cleaned_children|length > 0 %}
+        <div class="card-panel mb-3">
+            <div class="card-panel-header"><h5>Cleaned versions</h5></div>
+            <ul class="list-clean">
+                {% for child in cleaned_children %}
+                    <li>
+                        <a href="{{ url_for('datasets.detail', dataset_id=child.id) }}">{{ child.name }}</a>
+                        <span class="text-muted small float-end">{{ child.created_at.strftime("%b %d, %Y") }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-table"></i></div>
+            <div><div class="stat-value">{{ "{:,}".format(dataset.row_count or 0) }}</div><div class="stat-label">Rows</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-columns-gap"></i></div>
+            <div><div class="stat-value">{{ dataset.column_count or 0 }}</div><div class="stat-label">Columns</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-circle"></i></div>
+            <div><div class="stat-value">{{ "{:,}".format(dataset.missing_values_count or 0) }}</div><div class="stat-label">Missing values</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-copy"></i></div>
+            <div>
+                <div class="stat-value">
+                    {% if dataset.duplicate_rows_count is none %}—{% else %}{{ "{:,}".format(dataset.duplicate_rows_count) }}{% endif %}
+                </div>
+                <div class="stat-label">Duplicate rows</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-secondary-subtle text-secondary"><i class="bi bi-hdd"></i></div>
+            <div><div class="stat-value">{{ "%.1f"|format((dataset.memory_usage_bytes or 0) / (1024*1024)) }} MB</div><div class="stat-label">Memory usage</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-file-earmark"></i></div>
+            <div><div class="stat-value">{{ "%.1f"|format((dataset.file_size_bytes or 0) / (1024*1024)) }} MB</div><div class="stat-label">File size</div></div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card-panel">
+            <div class="card-panel-header"><h5><i class="bi bi-123 text-primary me-1"></i> Numeric columns ({{ numeric_cols|length }})</h5></div>
+            {% if numeric_cols %}
+                <div class="d-flex flex-wrap gap-1">
+                    {% for c in numeric_cols %}<span class="badge text-bg-light border">{{ c }}</span>{% endfor %}
+                </div>
+            {% else %}<p class="text-muted small mb-0">None detected.</p>{% endif %}
+        </div>
+        <div class="card-panel">
+            <div class="card-panel-header"><h5><i class="bi bi-tag text-info me-1"></i> Categorical columns ({{ categorical_cols|length }})</h5></div>
+            {% if categorical_cols %}
+                <div class="d-flex flex-wrap gap-1">
+                    {% for c in categorical_cols %}<span class="badge text-bg-light border">{{ c }}</span>{% endfor %}
+                </div>
+            {% else %}<p class="text-muted small mb-0">None detected.</p>{% endif %}
+        </div>
+        <div class="card-panel">
+            <div class="card-panel-header"><h5><i class="bi bi-calendar3 text-success me-1"></i> Date columns ({{ datetime_cols|length }})</h5></div>
+            {% if datetime_cols %}
+                <div class="d-flex flex-wrap gap-1">
+                    {% for c in datetime_cols %}<span class="badge text-bg-light border">{{ c }}</span>{% endfor %}
+                </div>
+            {% else %}<p class="text-muted small mb-0">None detected.</p>{% endif %}
+        </div>
+    </div>
+
+    <div class="card-panel mt-3">
+        <div class="card-panel-header"><h5>All columns &amp; data types</h5></div>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Column</th><th>Data type</th></tr></thead>
+                <tbody>
+                    {% for col, dtype in dtypes.items() %}
+                        <tr><td>{{ col }}</td><td><code>{{ dtype }}</code></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete dataset?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will permanently delete <strong>{{ dataset.name }}</strong>, its cleaned copies, and any charts, ML models, or reports built from it. This can't be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('datasets.delete', dataset_id=dataset.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

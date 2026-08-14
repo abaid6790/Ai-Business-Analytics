@@ -1,0 +1,10 @@
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="bi {{ icon | default('bi-inbox') }}"></i>
+    </div>
+    <h5>{{ title | default('Nothing here yet') }}</h5>
+    <p class="text-muted">{{ subtitle | default('Get started by adding your first item.') }}</p>
+    {% if action_url and action_label %}
+        <a href="{{ action_url }}" class="btn btn-primary btn-sm">{{ action_label }}</a>
+    {% endif %}
+</div>

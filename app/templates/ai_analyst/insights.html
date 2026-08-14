@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Insights · {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Insights: {{ dataset.name }}</h2>
+        <p class="text-muted">AI-generated observations, grounded in numbers computed from your data.</p>
+    </div>
+
+    {% if not ai_configured %}
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            No AI provider is configured yet. Add an API key to your environment to enable this feature.
+        </div>
+    {% else %}
+        <div class="card-panel">
+            <button type="button" class="btn btn-primary" id="generateBtn">
+                <i class="bi bi-magic"></i> Generate insights
+            </button>
+
+            <div id="insightsLoading" class="d-none mt-3">{% include "partials/loading_state.html" %}</div>
+            <div id="insightsError" class="alert alert-danger d-none mt-3"></div>
+            <div id="insightsResult" class="d-none mt-3">
+                <div class="insights-text" id="insightsText"></div>
+                <details class="mt-3">
+                    <summary class="text-muted small">View underlying computed facts</summary>
+                    <pre class="small mt-2" id="insightsFacts"></pre>
+                </details>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const INSIGHTS_GENERATE_URL = "{{ url_for('ai_analyst.insights_generate', dataset_id=dataset.id) }}";
+</script>
+<script src="{{ url_for('static', filename='js/ai_insights.js') }}"></script>
+{% endblock %}

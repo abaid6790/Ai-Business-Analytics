@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Clean {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Clean: {{ dataset.name }}</h2>
+        <p class="text-muted">Review data quality issues, choose fixes, and save as a new cleaned dataset. The original file is never modified.</p>
+    </div>
+
+    <div class="card-panel mb-3">
+        <div class="card-panel-header"><h5>Data quality scan</h5></div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-circle"></i></div>
+                <div><div class="stat-value">{{ quality.missing.total_missing_cells }}</div><div class="stat-label">Missing cells</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-copy"></i></div>
+                <div><div class="stat-value">{{ quality.duplicates.count }}</div><div class="stat-label">Duplicate rows</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-secondary-subtle text-secondary"><i class="bi bi-dash-square"></i></div>
+                <div><div class="stat-value">{{ quality.constant_columns|length }}</div><div class="stat-label">Constant columns</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-shuffle"></i></div>
+                <div><div class="stat-value">{{ quality.high_cardinality_columns|length }}</div><div class="stat-label">High-cardinality cols</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-graph-up"></i></div>
+                <div><div class="stat-value">{{ quality.outliers|length }}</div><div class="stat-label">Columns with outliers</div></div>
+            </div>
+        </div>
+
+        {% if quality.dtype_issues %}
+            <div class="alert alert-warning small mb-0">
+                <strong>Possible type mismatches:</strong>
+                {% for issue in quality.dtype_issues %}
+                    '{{ issue.column }}' looks {{ issue.looks_numeric_percentage }}% numeric but is stored as text.{% if not loop.last %} {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if quality.constant_columns %}
+            <p class="small text-muted mt-2 mb-0"><strong>Constant columns</strong> (only one value): {{ quality.constant_columns|join(', ') }}</p>
+        {% endif %}
+        {% if quality.high_cardinality_columns %}
+            <p class="small text-muted mt-2 mb-0"><strong>High-cardinality columns</strong> (mostly unique values): {{ quality.high_cardinality_columns|join(', ') }}</p>
+        {% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('datasets.clean_apply', dataset_id=dataset.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="card-panel mb-3">
+            <div class="card-panel-header"><h5>Duplicates</h5></div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="remove_duplicates" id="removeDuplicates" {% if quality.duplicates.count == 0 %}disabled{% endif %}>
+                <label class="form-check-label" for="removeDuplicates">
+                    Remove {{ quality.duplicates.count }} duplicate row(s)
+                </label>
+            </div>
+        </div>
+
+        <div class="card-panel mb-3">
+            <div class="card-panel-header"><h5>Missing values</h5></div>
+            {% if quality.missing.columns_with_missing %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>Column</th><th>Missing</th><th>Action</th></tr></thead>
+                        <tbody>
+                        {% for col, info in quality.missing.columns_with_missing.items() %}
+                            <tr>
+                                <td>{{ col }}</td>
+                                <td>{{ info.count }} ({{ info.percentage }}%)</td>
+                                <td>
+                                    <select class="form-select form-select-sm" name="missing__{{ col }}">
+                                        <option value="">No action</option>
+                                        <option value="drop">Drop rows</option>
+                                        {% if col in numeric_columns %}
+                                        <option value="mean">Fill with mean</option>
+                                        <option value="median">Fill with median</option>
+                                        <option value="zero">Fill with zero</option>
+                                        {% endif %}
+                                        <option value="mode">Fill with most common value</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0">No missing values detected.</p>
+            {% endif %}
+        </div>
+
+        <div class="card-panel mb-3">
+            <div class="card-panel-header"><h5>Outliers (IQR method)</h5></div>
+            {% if quality.outliers %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>Column</th><th>Outliers</th><th>Bounds</th><th>Action</th></tr></thead>
+                        <tbody>
+                        {% for col, info in quality.outliers.items() %}
+                            <tr>
+                                <td>{{ col }}</td>
+                                <td>{{ info.count }}</td>
+                                <td class="text-muted small">[{{ info.lower_bound }}, {{ info.upper_bound }}]</td>
+                                <td>
+                                    <select class="form-select form-select-sm" name="outliers__{{ col }}">
+                                        <option value="none">No action</option>
+                                        <option value="clip">Clip to bounds</option>
+                                        <option value="remove">Remove rows</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0">No significant outliers detected.</p>
+            {% endif %}
+        </div>
+
+        <div class="card-panel mb-3">
+            <div class="card-panel-header"><h5>Data types</h5></div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>Column</th><th>Convert to</th></tr></thead>
+                    <tbody>
+                    {% for col in columns %}
+                        <tr>
+                            <td>{{ col }}</td>
+                            <td>
+                                <select class="form-select form-select-sm" name="convert__{{ col }}">
+                                    <option value="none">No change</option>
+                                    <option value="int">Integer</option>
+                                    <option value="float">Float</option>
+                                    <option value="string">Text</option>
+                                    <option value="datetime">Date/time</option>
+                                    <option value="category">Category</option>
+                                </select>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-panel mb-3">
+            <div class="card-panel-header"><h5>Remove columns</h5></div>
+            <div class="d-flex flex-wrap gap-3">
+                {% for col in columns %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="drop_column" value="{{ col }}" id="drop_{{ loop.index }}">
+                        <label class="form-check-label" for="drop_{{ loop.index }}">{{ col }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-magic"></i> Apply &amp; save cleaned dataset</button>
+            <a href="{{ url_for('datasets.detail', dataset_id=dataset.id) }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

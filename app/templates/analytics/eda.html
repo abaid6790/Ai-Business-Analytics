@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Explore {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h2>Explore: {{ dataset.name }}</h2>
+            <p class="text-muted">Automatic statistics and charts generated from your data.</p>
+        </div>
+        <a href="{{ url_for('analytics.chart_builder', dataset_id=dataset.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-bar-chart-fill"></i> Build a custom chart
+        </a>
+    </div>
+
+    <div id="edaLoading">{% include "partials/loading_state.html" %}</div>
+    <div id="edaError" class="alert alert-danger d-none"></div>
+
+    <div id="edaContent" class="d-none">
+        <ul class="nav nav-tabs mb-3" id="edaTabs">
+            <li class="nav-item"><button class="nav-link active" data-tab="charts">Charts</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="numeric">Numeric stats</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="categorical">Categorical stats</button></li>
+            <li class="nav-item"><button class="nav-link" data-tab="correlation">Correlation</button></li>
+        </ul>
+
+        <div class="eda-tab-panel" id="panel-charts">
+            <div class="dashboard-grid" id="autoChartsGrid"></div>
+        </div>
+
+        <div class="eda-tab-panel d-none" id="panel-numeric">
+            <div class="card-panel">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="numericStatsTable">
+                        <thead>
+                            <tr><th>Column</th><th>Count</th><th>Mean</th><th>Median</th><th>Std</th><th>Min</th><th>Q1</th><th>Q3</th><th>Max</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="eda-tab-panel d-none" id="panel-categorical">
+            <div class="dashboard-grid" id="categoricalStatsGrid"></div>
+        </div>
+
+        <div class="eda-tab-panel d-none" id="panel-correlation">
+            <div class="card-panel">
+                <div id="correlationHeatmap"></div>
+                <p class="text-muted small mt-2 mb-0" id="correlationEmpty"></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+    const EDA_DATA_URL = "{{ url_for('analytics.eda_data', dataset_id=dataset.id) }}";
+</script>
+<script src="{{ url_for('static', filename='js/eda.js') }}"></script>
+{% endblock %}

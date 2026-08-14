@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "partials/form_macros.html" import render_field %}
+{% block title %}Upload dataset · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Upload a dataset</h2>
+        <p class="text-muted">CSV, XLSX, or XLS — up to {{ config.MAX_CONTENT_LENGTH_MB }}MB.</p>
+    </div>
+
+    <div id="uploadStep">
+        <div class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden>
+            <i class="bi bi-cloud-arrow-up-fill"></i>
+            <h5>Drag &amp; drop your file here</h5>
+            <p class="text-muted">or</p>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="browseBtn">Browse files</button>
+        </div>
+        <div id="uploadError" class="alert alert-danger d-none mt-3"></div>
+        <div id="uploadLoading" class="d-none">
+            {% include "partials/loading_state.html" %}
+        </div>
+    </div>
+
+    <div id="previewStep" class="d-none">
+        <div class="card-panel mb-3">
+            <div class="card-panel-header d-flex justify-content-between align-items-center">
+                <h5>Data quality summary</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="startOverBtn">
+                    <i class="bi bi-arrow-counterclockwise"></i> Start over
+                </button>
+            </div>
+            <div class="stat-grid" id="statGrid"></div>
+            <div id="chunkedWarning" class="alert alert-warning d-none mt-2 mb-0 small">
+                This file is large — duplicate-row detection was skipped to keep memory usage low.
+            </div>
+        </div>
+
+        <div class="card-panel mb-3">
+            <div class="card-panel-header"><h5>Preview (first rows)</h5></div>
+            <div class="table-responsive">
+                <table class="table table-sm" id="previewTable">
+                    <thead><tr id="previewHeadRow"></tr></thead>
+                    <tbody id="previewBodyRows"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Dataset details</h5></div>
+            <form method="POST" action="{{ url_for('datasets.upload_commit') }}" id="commitForm" novalidate>
+                {{ form.csrf_token }}
+                {{ form.temp_filename(id="fieldTempFilename") }}
+                {{ form.original_filename(id="fieldOriginalFilename") }}
+                {{ form.file_type(id="fieldFileType") }}
+                {{ form.file_size_bytes(id="fieldFileSize") }}
+
+                {{ render_field(form.name) }}
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control", rows=3) }}
+                </div>
+                {{ form.submit(class="btn btn-primary") }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const UPLOAD_PREVIEW_URL = "{{ url_for('datasets.upload_preview') }}";
+    const UPLOAD_DISCARD_URL = "{{ url_for('datasets.upload_discard') }}";
+</script>
+<script src="{{ url_for('static', filename='js/upload_dropzone.js') }}"></script>
+{% endblock %}

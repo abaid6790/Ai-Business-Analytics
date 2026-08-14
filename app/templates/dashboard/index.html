@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Welcome back{% if current_user.full_name %}, {{ current_user.full_name.split(' ')[0] }}{% endif %}</h2>
+        <p class="text-muted">Here's what's happening with your data.</p>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-folder-fill"></i></div>
+            <div>
+                <div class="stat-value">{{ stats.total_datasets }}</div>
+                <div class="stat-label">Datasets</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-diagram-3-fill"></i></div>
+            <div>
+                <div class="stat-value">{{ stats.total_analyses }}</div>
+                <div class="stat-label">Analyses</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-table"></i></div>
+            <div>
+                <div class="stat-value">{{ "{:,}".format(stats.total_rows) }}</div>
+                <div class="stat-label">Rows processed</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-columns-gap"></i></div>
+            <div>
+                <div class="stat-value">{{ stats.total_columns }}</div>
+                <div class="stat-label">Columns analyzed</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-robot"></i></div>
+            <div>
+                <div class="stat-value">{{ stats.total_ai_questions }}</div>
+                <div class="stat-label">AI questions asked</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-cpu-fill"></i></div>
+            <div>
+                <div class="stat-value">{{ stats.total_ml_models }}</div>
+                <div class="stat-label">ML models created</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon bg-secondary-subtle text-secondary"><i class="bi bi-hdd-fill"></i></div>
+            <div>
+                <div class="stat-value">{{ stats.storage_mb }} MB</div>
+                <div class="stat-label">Storage used</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card-panel">
+            <div class="card-panel-header">
+                <h5>Recent datasets</h5>
+            </div>
+            {% if recent_datasets %}
+                <ul class="list-clean">
+                    {% for d in recent_datasets %}
+                        <li>
+                            <i class="bi bi-file-earmark-spreadsheet-fill text-muted me-2"></i>
+                            {{ d.name }}
+                            <span class="text-muted small float-end">{{ d.created_at.strftime("%b %d, %Y") }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                {% include "partials/empty_state.html" with context %}
+            {% endif %}
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header">
+                <h5>Recent reports</h5>
+            </div>
+            {% if recent_reports %}
+                <ul class="list-clean">
+                    {% for r in recent_reports %}
+                        <li>
+                            <i class="bi bi-file-earmark-text-fill text-muted me-2"></i>
+                            {{ r.title }}
+                            <span class="text-muted small float-end">{{ r.created_at.strftime("%b %d, %Y") }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                {% set title = "No reports yet" %}
+                {% set subtitle = "Generate your first report from an analysis project." %}
+                {% set icon = "bi-file-earmark-text" %}
+                {% include "partials/empty_state.html" with context %}
+            {% endif %}
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header">
+                <h5>Recent AI questions</h5>
+            </div>
+            {% if recent_conversations %}
+                <ul class="list-clean">
+                    {% for c in recent_conversations %}
+                        <li>
+                            <i class="bi bi-chat-dots-fill text-muted me-2"></i>
+                            {{ c.title or "Untitled conversation" }}
+                            <span class="text-muted small float-end">{{ c.updated_at.strftime("%b %d, %Y") }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                {% set title = "No AI conversations yet" %}
+                {% set subtitle = "Upload a dataset and ask your first question." %}
+                {% set icon = "bi-robot" %}
+                {% include "partials/empty_state.html" with context %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

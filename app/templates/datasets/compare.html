@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Compare · {{ cleaned.name }} · {{ app_name }}{% endblock %}
+
+{% macro stat_row(label, before, after, fmt="int") %}
+    <tr>
+        <td>{{ label }}</td>
+        <td>{% if fmt == "mb" %}{{ "%.2f"|format((before or 0) / (1024*1024)) }} MB{% else %}{{ "{:,}".format(before or 0) }}{% endif %}</td>
+        <td>{% if fmt == "mb" %}{{ "%.2f"|format((after or 0) / (1024*1024)) }} MB{% else %}{{ "{:,}".format(after or 0) }}{% endif %}</td>
+        <td>
+            {% set delta = (after or 0) - (before or 0) %}
+            {% if delta > 0 %}<span class="text-success">+{{ "{:,}".format(delta) }}</span>
+            {% elif delta < 0 %}<span class="text-danger">{{ "{:,}".format(delta) }}</span>
+            {% else %}<span class="text-muted">no change</span>{% endif %}
+        </td>
+    </tr>
+{% endmacro %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Before &amp; after cleaning</h2>
+        <p class="text-muted">
+            <a href="{{ url_for('datasets.detail', dataset_id=original.id) }}">{{ original.name }}</a>
+            <i class="bi bi-arrow-right mx-1"></i>
+            <a href="{{ url_for('datasets.detail', dataset_id=cleaned.id) }}">{{ cleaned.name }}</a>
+        </p>
+    </div>
+
+    <div class="card-panel mb-3">
+        <div class="card-panel-header"><h5>Cleaning actions applied</h5></div>
+        <p class="small text-muted mb-0">{{ cleaned.description }}</p>
+    </div>
+
+    <div class="card-panel">
+        <div class="card-panel-header"><h5>Comparison</h5></div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Metric</th><th>Before</th><th>After</th><th>Change</th></tr></thead>
+                <tbody>
+                    {{ stat_row("Rows", original.row_count, cleaned.row_count) }}
+                    {{ stat_row("Columns", original.column_count, cleaned.column_count) }}
+                    {{ stat_row("Missing values", original.missing_values_count, cleaned.missing_values_count) }}
+                    {{ stat_row("Duplicate rows", original.duplicate_rows_count, cleaned.duplicate_rows_count) }}
+                    {{ stat_row("Memory usage", original.memory_usage_bytes, cleaned.memory_usage_bytes, fmt="mb") }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{{ url_for('datasets.detail', dataset_id=cleaned.id) }}" class="btn btn-primary btn-sm">View cleaned dataset</a>
+    </div>
+</div>
+{% endblock %}

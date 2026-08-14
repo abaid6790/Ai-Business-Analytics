@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ chart.title }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h2>{{ chart.title }}</h2>
+            <p class="text-muted mb-0">From <a href="{{ url_for('datasets.detail', dataset_id=dataset.id) }}">{{ dataset.name }}</a> &middot; {{ chart.chart_type }} chart</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="downloadBtn">
+                <i class="bi bi-download"></i> Download PNG
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteChartModal">
+                <i class="bi bi-trash-fill"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    <div class="card-panel">
+        <div class="chart-canvas-wrapper" style="height: 420px;">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteChartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete chart?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will permanently delete <strong>{{ chart.title }}</strong>. This can't be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('analytics.chart_delete', chart_id=chart.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+    const CHART_DATA = {{ chart_data | tojson }};
+    const CHART_TITLE = {{ chart.title | tojson }};
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const type = CHART_DATA.chart_type === "area" ? "line" : CHART_DATA.chart_type;
+        const palette = ["#4f46e5", "#0ea5e9", "#16a34a", "#d97706", "#dc2626", "#7c3aed"];
+        const datasets = (CHART_DATA.datasets || []).map((ds, i) => ({
+            label: ds.label,
+            data: ds.data,
+            backgroundColor: type === "line" ? "transparent" : palette[i % palette.length],
+            borderColor: palette[i % palette.length],
+            fill: CHART_DATA.chart_type === "area",
+        }));
+
+        const ctx = document.getElementById("chartCanvas").getContext("2d");
+        const chartInstance = new Chart(ctx, {
+            type: type === "scatter" ? "scatter" : (type || "bar"),
+            data: { labels: CHART_DATA.labels || [], datasets },
+            options: { responsive: true, maintainAspectRatio: false },
+        });
+
+        document.getElementById("downloadBtn").addEventListener("click", function () {
+            const link = document.createElement("a");
+            link.download = CHART_TITLE.replace(/[^a-z0-9]+/gi, "_") + ".png";
+            link.href = chartInstance.toBase64Image();
+            link.click();
+        });
+    });
+</script>
+{% endblock %}

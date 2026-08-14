@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} — Upload data, get answers{% endblock %}
+
+{% block content %}
+<div class="landing-hero">
+    <h1>Turn raw spreadsheets into decisions.</h1>
+    <p class="lead text-muted">
+        Upload a CSV or Excel file. Get automatic cleaning, exploratory analysis,
+        AI-powered insights, anomaly detection, and machine-learning predictions —
+        without writing a line of code.
+    </p>
+    <div class="landing-cta">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get started free</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg">Log in</a>
+    </div>
+</div>
+
+<div class="landing-features">
+    <div class="feature-card">
+        <i class="bi bi-cloud-upload-fill"></i>
+        <h5>Upload &amp; clean</h5>
+        <p class="text-muted">Drag in CSV/XLSX files and get instant data-quality diagnostics.</p>
+    </div>
+    <div class="feature-card">
+        <i class="bi bi-graph-up-arrow"></i>
+        <h5>Automatic EDA</h5>
+        <p class="text-muted">Charts, statistics, and correlations generated for you.</p>
+    </div>
+    <div class="feature-card">
+        <i class="bi bi-robot"></i>
+        <h5>Ask your data</h5>
+        <p class="text-muted">Natural-language questions answered with real computed numbers.</p>
+    </div>
+    <div class="feature-card">
+        <i class="bi bi-cpu-fill"></i>
+        <h5>Train ML models</h5>
+        <p class="text-muted">Classification, regression, and forecasting in a few clicks.</p>
+    </div>
+</div>
+{% endblock %}

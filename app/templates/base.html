@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% if current_user.is_authenticated %}has-app-shell{% endif %}">
+
+{% if current_user.is_authenticated %}
+    {% include "partials/sidebar.html" %}
+{% endif %}
+
+<div class="app-content {% if current_user.is_authenticated %}with-sidebar{% endif %}">
+
+    {% if current_user.is_authenticated %}
+        {% include "partials/topnav.html" %}
+    {% else %}
+        {% include "partials/public_nav.html" %}
+    {% endif %}
+
+    <main class="page-main">
+        <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% include "partials/toast.html" %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

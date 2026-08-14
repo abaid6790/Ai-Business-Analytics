@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "partials/form_macros.html" import render_password_field %}
+{% block title %}Delete account · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="card-panel narrow-form border-danger">
+        <h4 class="text-danger">Delete your account</h4>
+        <p class="text-muted">
+            This will permanently delete your account and all associated datasets, projects,
+            charts, ML models, reports, and AI conversations. This action cannot be undone.
+        </p>
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+            {{ render_password_field(form.password) }}
+            {{ form.submit(class="btn btn-danger") }}
+            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

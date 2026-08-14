@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}AI conversations · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>AI conversations</h2>
+        <p class="text-muted">Past questions and insights across your datasets.</p>
+    </div>
+
+    {% if pagination.items %}
+        <div class="card-panel">
+            <ul class="list-clean">
+                {% for c in pagination.items %}
+                    <li class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('ai_analyst.chat', dataset_id=c.dataset_id) }}">
+                                <i class="bi bi-chat-dots-fill text-muted me-2"></i>{{ c.title or "Untitled conversation" }}
+                            </a>
+                            <div class="text-muted small">{{ c.messages.count() }} message(s) &middot; updated {{ c.updated_at.strftime("%b %d, %Y") }}</div>
+                        </div>
+                        <form method="POST" action="{{ url_for('ai_analyst.conversation_delete', conversation_id=c.id) }}" onsubmit="return confirm('Delete this conversation?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if pagination.pages > 1 %}
+            <nav class="mt-3">
+                <ul class="pagination">
+                    {% for p in range(1, pagination.pages + 1) %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('ai_analyst.conversation_list', page=p) }}">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        {% set title = "No AI conversations yet" %}
+        {% set subtitle = "Open a dataset and ask a question to get started." %}
+        {% set icon = "bi-robot" %}
+        {% set action_url = url_for('datasets.index') %}
+        {% set action_label = "Go to datasets" %}
+        {% include "partials/empty_state.html" with context %}
+    {% endif %}
+</div>
+{% endblock %}

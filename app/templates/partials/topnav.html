@@ -1,0 +1,25 @@
+<header class="app-topnav">
+    <button class="btn btn-sm btn-icon d-lg-none" id="sidebarToggle" aria-label="Toggle sidebar">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <div class="topnav-spacer"></div>
+
+    <button class="btn btn-sm btn-icon" id="themeToggle" aria-label="Toggle dark mode">
+        <i class="bi bi-moon-stars-fill" id="themeIconDark"></i>
+        <i class="bi bi-sun-fill d-none" id="themeIconLight"></i>
+    </button>
+
+    <div class="dropdown">
+        <button class="btn btn-sm profile-menu-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <span class="avatar-circle">{{ (current_user.full_name or current_user.email)[0] | upper }}</span>
+            <span class="d-none d-md-inline">{{ current_user.full_name or current_user.email }}</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-person-fill me-2"></i>Profile</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}"><i class="bi bi-key-fill me-2"></i>Change password</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Log out</a></li>
+        </ul>
+    </div>
+</header>

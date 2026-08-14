@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Chart builder · {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h2>Chart builder</h2>
+            <p class="text-muted">{{ dataset.name }}</p>
+        </div>
+        <a href="{{ url_for('analytics.chart_list', dataset_id=dataset.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-collection"></i> Saved charts
+        </a>
+    </div>
+
+    <div class="chart-builder-layout">
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Configuration</h5></div>
+
+            <div class="mb-3">
+                <label class="form-label">Chart type</label>
+                <select class="form-select form-select-sm" id="chartType">
+                    <option value="bar">Bar</option>
+                    <option value="line">Line</option>
+                    <option value="area">Area</option>
+                    <option value="pie">Pie</option>
+                    <option value="doughnut">Doughnut</option>
+                    <option value="scatter">Scatter</option>
+                    <option value="histogram">Histogram</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">X axis</label>
+                <select class="form-select form-select-sm" id="xAxis">
+                    {% for col in columns %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3" id="yAxisWrapper">
+                <label class="form-label">Y axis</label>
+                <select class="form-select form-select-sm" id="yAxis">
+                    <option value="">(count of rows)</option>
+                    {% for col in columns %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3" id="aggregationWrapper">
+                <label class="form-label">Aggregation</label>
+                <select class="form-select form-select-sm" id="aggregation">
+                    <option value="sum">Sum</option>
+                    <option value="mean">Average</option>
+                    <option value="count">Count</option>
+                    <option value="min">Min</option>
+                    <option value="max">Max</option>
+                    <option value="median">Median</option>
+                </select>
+            </div>
+
+            <div class="mb-3" id="groupByWrapper">
+                <label class="form-label">Group by (optional)</label>
+                <select class="form-select form-select-sm" id="groupBy">
+                    <option value="">None</option>
+                    {% for col in columns %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label d-flex justify-content-between align-items-center">
+                    Filters
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="addFilterBtn">+ Add</button>
+                </label>
+                <div id="filtersContainer"></div>
+            </div>
+
+            <button type="button" class="btn btn-primary w-100" id="previewBtn">
+                <i class="bi bi-eye-fill"></i> Preview chart
+            </button>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Preview</h5></div>
+            <div id="previewLoading" class="d-none">{% include "partials/loading_state.html" %}</div>
+            <div id="previewError" class="alert alert-danger d-none"></div>
+            <div class="chart-canvas-wrapper d-none" id="previewCanvasWrapper">
+                <canvas id="previewCanvas"></canvas>
+            </div>
+
+            <div id="saveChartSection" class="d-none mt-3 pt-3 border-top">
+                <form method="POST" action="{{ url_for('analytics.save_chart', dataset_id=dataset.id) }}" id="saveChartForm">
+                    {{ form.csrf_token }}
+                    {{ form.chart_type(id="saveChartType") }}
+                    {{ form.config_json(id="saveConfigJson") }}
+                    <div class="d-flex gap-2">
+                        <input type="text" name="title" class="form-control form-control-sm" placeholder="Chart title" required>
+                        <button type="submit" class="btn btn-success btn-sm text-nowrap">
+                            <i class="bi bi-save-fill"></i> Save chart
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" id="downloadChartBtn">
+                            <i class="bi bi-download"></i> Download
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+    const CHART_PREVIEW_URL = "{{ url_for('analytics.chart_preview', dataset_id=dataset.id) }}";
+    const NUMERIC_COLUMNS = {{ numeric_columns | tojson }};
+    const ALL_COLUMNS = {{ columns | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/chart_builder.js') }}"></script>
+{% endblock %}

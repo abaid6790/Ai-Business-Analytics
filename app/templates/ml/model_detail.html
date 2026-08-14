@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}{{ model.algorithm }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h2>{{ model.algorithm }} {% if model.is_best_model %}<i class="bi bi-star-fill text-warning" title="Best model"></i>{% endif %}</h2>
+            <p class="text-muted mb-0">Predicting <strong>{{ model.target_column }}</strong> &middot; {{ model.task_type }} &middot;
+                <a href="{{ url_for('datasets.detail', dataset_id=model.dataset_id) }}">back to dataset</a></p>
+        </div>
+        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModelModal">
+            <i class="bi bi-trash-fill"></i> Delete
+        </button>
+    </div>
+
+    {% if model.status == 'failed' %}
+        <div class="alert alert-danger"><strong>Training failed:</strong> {{ model.error_message }}</div>
+    {% elif model.status != 'completed' %}
+        <div class="alert alert-warning">This model is still {{ model.status }}.</div>
+    {% else %}
+
+    <div class="stat-grid">
+        {% if model.task_type == 'classification' %}
+            <div class="stat-card"><div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-bullseye"></i></div>
+                <div><div class="stat-value">{{ metrics.accuracy }}</div><div class="stat-label">Accuracy</div></div></div>
+            <div class="stat-card"><div class="stat-icon bg-info-subtle text-info"><i class="bi bi-check2-square"></i></div>
+                <div><div class="stat-value">{{ metrics.precision }}</div><div class="stat-label">Precision</div></div></div>
+            <div class="stat-card"><div class="stat-icon bg-success-subtle text-success"><i class="bi bi-arrow-repeat"></i></div>
+                <div><div class="stat-value">{{ metrics.recall }}</div><div class="stat-label">Recall</div></div></div>
+            <div class="stat-card"><div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-graph-up"></i></div>
+                <div><div class="stat-value">{{ metrics.f1 }}</div><div class="stat-label">F1 score</div></div></div>
+            {% if metrics.roc_auc is not none %}
+            <div class="stat-card"><div class="stat-icon bg-secondary-subtle text-secondary"><i class="bi bi-activity"></i></div>
+                <div><div class="stat-value">{{ metrics.roc_auc }}</div><div class="stat-label">ROC-AUC</div></div></div>
+            {% endif %}
+        {% else %}
+            <div class="stat-card"><div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-rulers"></i></div>
+                <div><div class="stat-value">{{ metrics.mae }}</div><div class="stat-label">MAE</div></div></div>
+            <div class="stat-card"><div class="stat-icon bg-info-subtle text-info"><i class="bi bi-rulers"></i></div>
+                <div><div class="stat-value">{{ metrics.rmse }}</div><div class="stat-label">RMSE</div></div></div>
+            <div class="stat-card"><div class="stat-icon bg-success-subtle text-success"><i class="bi bi-bullseye"></i></div>
+                <div><div class="stat-value">{{ metrics.r2 }}</div><div class="stat-label">R\u00b2</div></div></div>
+        {% endif %}
+        <div class="stat-card"><div class="stat-icon bg-secondary-subtle text-secondary"><i class="bi bi-stopwatch"></i></div>
+            <div><div class="stat-value">{{ model.training_time_seconds }}s</div><div class="stat-label">Training time</div></div></div>
+    </div>
+
+    {% if cv_scores %}
+    <div class="card-panel mb-3">
+        <div class="card-panel-header"><h5>Cross-validation ({{ cv_scores.folds }}-fold)</h5></div>
+        <p class="mb-0">Mean {{ cv_scores.scoring }}: <strong>{{ cv_scores.mean }}</strong> (&plusmn; {{ cv_scores.std }})</p>
+        <p class="text-muted small mb-0">Fold scores: {{ cv_scores.scores|join(', ') }}</p>
+    </div>
+    {% endif %}
+
+    <div class="dashboard-grid">
+        {% if model.task_type == 'classification' %}
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Confusion matrix</h5></div>
+            <div class="table-responsive">
+                <table class="table table-sm heatmap-table" id="confusionMatrix"></table>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Feature importance</h5></div>
+            <div class="chart-canvas-wrapper" style="height:260px;"><canvas id="importanceChart"></canvas></div>
+            <p class="text-muted small mt-1 mb-0">Method: {{ feature_importance.method }}</p>
+        </div>
+    </div>
+
+    <div class="card-panel mt-3">
+        <div class="card-panel-header"><h5>Plain-language explanation</h5></div>
+        <div class="insights-text">{{ model.explanation_text }}</div>
+    </div>
+
+    <div class="card-panel mt-3">
+        <div class="card-panel-header"><h5>Try a prediction</h5></div>
+        <form id="predictForm">
+            <div class="row g-2">
+                {% for col in feature_columns %}
+                    <div class="col-md-4">
+                        <label class="form-label small">{{ col }}</label>
+                        <input type="text" class="form-control form-control-sm predict-field" data-column="{{ col }}" placeholder="{{ col }}">
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm mt-3"><i class="bi bi-magic"></i> Predict</button>
+        </form>
+        <div id="predictError" class="alert alert-danger d-none mt-3"></div>
+        <div id="predictResult" class="alert alert-success d-none mt-3"></div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal fade" id="deleteModelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete model?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body"><p>This permanently deletes the trained model file.</p></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('ml.model_delete', model_id=model.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+    const MODEL_METRICS = {{ metrics | tojson }};
+    const MODEL_TASK_TYPE = {{ model.task_type | tojson }};
+    const FEATURE_IMPORTANCE = {{ feature_importance | tojson }};
+    const PREDICT_URL = "{{ url_for('ml.predict', model_id=model.id) }}";
+</script>
+<script src="{{ url_for('static', filename='js/ml_model_detail.js') }}"></script>
+{% endblock %}

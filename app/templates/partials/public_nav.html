@@ -1,0 +1,13 @@
+<header class="public-nav">
+    <a href="{{ url_for('main.index') }}" class="public-brand">
+        <i class="bi bi-bar-chart-line-fill"></i> AI Analytics
+    </a>
+    <div class="public-nav-actions">
+        <button class="btn btn-sm btn-icon" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="bi bi-moon-stars-fill" id="themeIconDark"></i>
+            <i class="bi bi-sun-fill d-none" id="themeIconLight"></i>
+        </button>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-sm">Log in</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Get started</a>
+    </div>
+</header>

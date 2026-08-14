@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Forecast · {{ dataset.name }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2>Forecasting</h2>
+        <p class="text-muted">{{ dataset.name }}</p>
+    </div>
+
+    {% if not date_columns or not numeric_columns %}
+        {% set title = "Forecasting not available" %}
+        {% set subtitle = "This dataset needs at least one date column and one numeric column." %}
+        {% set icon = "bi-clock-history" %}
+        {% include "partials/empty_state.html" with context %}
+    {% else %}
+    <div class="chart-builder-layout">
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Configuration</h5></div>
+
+            <div class="mb-3">
+                <label class="form-label">Date column</label>
+                <select class="form-select form-select-sm" id="dateColumn">
+                    {% for col in date_columns %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Value column</label>
+                <select class="form-select form-select-sm" id="valueColumn">
+                    {% for col in numeric_columns %}<option value="{{ col }}">{{ col }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Periods to forecast</label>
+                <input type="number" class="form-control form-control-sm" id="periodsInput" value="12" min="1" max="120">
+            </div>
+
+            <button type="button" class="btn btn-primary w-100" id="forecastBtn">
+                <i class="bi bi-graph-up-arrow"></i> Generate forecast
+            </button>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header"><h5>Forecast</h5></div>
+            <div id="forecastLoading" class="d-none">{% include "partials/loading_state.html" %}</div>
+            <div id="forecastError" class="alert alert-danger d-none"></div>
+
+            <div id="forecastContent" class="d-none">
+                <div class="d-flex gap-2 flex-wrap mb-3" id="forecastBadges"></div>
+                <div class="chart-canvas-wrapper" style="height: 340px;">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+                <p class="text-muted small mt-2 mb-0" id="confidenceNote"></p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+    const FORECAST_GENERATE_URL = "{{ url_for('forecasting.generate', dataset_id=dataset.id) }}";
+</script>
+<script src="{{ url_for('static', filename='js/forecasting.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,14 @@
+<ul class="nav nav-tabs mb-4" id="edaTabs">
+    <li class="nav-item">
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Dashboard</a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ url_for('admin.users') }}" class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}">Users</a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ url_for('admin.logs') }}" class="nav-link {% if request.endpoint == 'admin.logs' %}active{% endif %}">System Logs</a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ url_for('admin.ai_providers') }}" class="nav-link {% if request.endpoint == 'admin.ai_providers' %}active{% endif %}">AI Providers</a>
+    </li>
+</ul>
