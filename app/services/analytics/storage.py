@@ -5,6 +5,7 @@ this one module, not every place that reads/writes dataset files.
 """
 
 import os
+import time
 import uuid
 
 from werkzeug.utils import secure_filename
@@ -82,3 +83,34 @@ class LocalStorage:
             df.to_excel(permanent_path, index=False, engine="openpyxl")
 
         return permanent_path, actual_type
+
+
+def cleanup_stale_temp_uploads(upload_folder: str, temp_subfolder: str, max_age_hours: int) -> int:
+    """
+    Deletes temp-upload files older than `max_age_hours` (spec: an upload
+    that was previewed but never committed shouldn't sit on disk forever).
+    Returns the number of files deleted. Safe to run repeatedly — meant to
+    be invoked on a schedule (cron, systemd timer, etc.) via the
+    `flask cleanup-temp-uploads` CLI command.
+    """
+    temp_root = os.path.join(upload_folder, temp_subfolder)
+    if not os.path.isdir(temp_root):
+        return 0
+
+    cutoff = time.time() - (max_age_hours * 3600)
+    deleted_count = 0
+
+    for user_dir in os.listdir(temp_root):
+        user_path = os.path.join(temp_root, user_dir)
+        if not os.path.isdir(user_path):
+            continue
+
+        for filename in os.listdir(user_path):
+            file_path = os.path.join(user_path, filename)
+            if not os.path.isfile(file_path):
+                continue
+            if os.path.getmtime(file_path) < cutoff:
+                os.remove(file_path)
+                deleted_count += 1
+
+    return deleted_count

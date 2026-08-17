@@ -16,9 +16,12 @@ document.addEventListener("DOMContentLoaded", function () {
         appendMessage("user", question);
         input.value = "";
         setLoading(true);
-        const thinkingEl = appendThinking();
 
-        fetch(CHAT_ASK_URL, {
+        streamAnswer(question);
+    });
+
+    function streamAnswer(question) {
+        fetch(CHAT_ASK_STREAM_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -26,23 +29,42 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify({ question, conversation_id: CONVERSATION_ID }),
         })
-            .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
-            .then(({ ok, data }) => {
-                thinkingEl.remove();
-                setLoading(false);
-                if (!ok) {
-                    appendMessage("assistant", data.error || "Something went wrong. Please try again.", true);
-                    return;
+            .then((res) => {
+                if (!res.ok) {
+                    // Errors from this endpoint come back as JSON, not a stream.
+                    return res.json().then((data) => {
+                        throw new Error(data.error || "Something went wrong. Please try again.");
+                    });
                 }
-                CONVERSATION_ID = data.conversation_id;
-                appendMessage("assistant", data.answer);
+
+                const headerConvId = res.headers.get("X-Conversation-Id");
+                if (headerConvId) CONVERSATION_ID = parseInt(headerConvId, 10);
+
+                const bubble = appendMessage("assistant", "");
+                bubble.classList.add("chat-bubble-streaming");
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+
+                function readChunk() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            bubble.classList.remove("chat-bubble-streaming");
+                            setLoading(false);
+                            return;
+                        }
+                        bubble.textContent += decoder.decode(value, { stream: true });
+                        messagesEl.scrollTop = messagesEl.scrollHeight;
+                        return readChunk();
+                    });
+                }
+                return readChunk();
             })
-            .catch(() => {
-                thinkingEl.remove();
+            .catch((err) => {
                 setLoading(false);
-                appendMessage("assistant", "Something went wrong. Please try again.", true);
+                appendMessage("assistant", err.message || "Something went wrong. Please try again.", true);
             });
-    });
+    }
 
     function appendMessage(role, text, isError) {
         const wrapper = document.createElement("div");
@@ -53,16 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
         wrapper.appendChild(bubble);
         messagesEl.appendChild(wrapper);
         messagesEl.scrollTop = messagesEl.scrollHeight;
-        return wrapper;
-    }
-
-    function appendThinking() {
-        const wrapper = document.createElement("div");
-        wrapper.className = "chat-message chat-message-assistant";
-        wrapper.innerHTML = '<div class="chat-bubble chat-bubble-thinking"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
-        messagesEl.appendChild(wrapper);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-        return wrapper;
+        return bubble;
     }
 
     function removeEmptyState() {

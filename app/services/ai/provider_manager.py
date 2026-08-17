@@ -26,6 +26,7 @@ from app.services.ai.base_provider import (
     ProviderInvalidRequestError,
     ProviderRateLimitError,
     ProviderTransientError,
+    build_analyze_prompt,
 )
 from app.services.ai.cache import InMemoryResponseCache, build_cache_key
 from app.services.ai.gemini_key_manager import GeminiKeyManager
@@ -178,6 +179,23 @@ class AIProviderManager:
                 raise
 
         raise AllProvidersExhaustedError(str(last_error) if last_error else "No AI providers are configured.")
+
+    def stream_analyze(self, context, question, user_id=None, **kwargs):
+        """Streaming counterpart to analyze() — same grounding prompt
+        (build_analyze_prompt), just yielded incrementally instead of
+        returned as one blocking ProviderResponse. Used by the AI chat's
+        streaming endpoint; the caller (the route) is responsible for
+        accumulating and persisting the full text once the generator is
+        exhausted, since a generator can't also return a value."""
+        prompt = build_analyze_prompt(context, question)
+        yield from self.stream(prompt, user_id=user_id, **kwargs)
+
+    def check_usage_limit(self, user_id):
+        """Public wrapper so callers (e.g. a streaming route) can check
+        the limit *before* committing to an HTTP response — stream()
+        itself only checks lazily on first iteration, which would be too
+        late to cleanly return a 429 after headers are already sent."""
+        self._check_usage_limit(user_id)
 
     # ------------------------------------------------------------------
     # Core execution: cache -> fallback loop -> usage logging

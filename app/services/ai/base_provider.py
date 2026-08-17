@@ -120,14 +120,7 @@ class BaseAIProvider(ABC):
         invented) with the user's question, and instructs the model to
         answer using ONLY that context.
         """
-        prompt = (
-            "You are a data analyst assistant. Answer the user's question "
-            "using ONLY the structured data below. Do not invent, estimate, "
-            "or guess any numbers that are not present in this data — if the "
-            "data doesn't contain what's needed to answer, say so.\n\n"
-            f"DATA:\n{json.dumps(context, default=str)}\n\n"
-            f"QUESTION: {question}"
-        )
+        prompt = build_analyze_prompt(context, question)
         return self.generate(prompt, **kwargs)
 
     def stream(self, prompt: str, **kwargs) -> Iterator[str]:
@@ -138,6 +131,21 @@ class BaseAIProvider(ABC):
         """
         response = self.generate(prompt, **kwargs)
         yield response.text
+
+
+def build_analyze_prompt(context: dict, question: str) -> str:
+    """Shared by BaseAIProvider.analyze() (blocking) and
+    AIProviderManager.stream_analyze() (streaming) so the "answer using
+    ONLY this data" grounding instructions never drift between the two
+    paths."""
+    return (
+        "You are a data analyst assistant. Answer the user's question "
+        "using ONLY the structured data below. Do not invent, estimate, "
+        "or guess any numbers that are not present in this data — if the "
+        "data doesn't contain what's needed to answer, say so.\n\n"
+        f"DATA:\n{json.dumps(context, default=str)}\n\n"
+        f"QUESTION: {question}"
+    )
 
 
 def _strip_code_fences(text: str) -> str:

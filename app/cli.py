@@ -39,5 +39,19 @@ def create_admin_command():
         click.echo(f"Promoted existing user to admin: {email}")
 
 
+@click.command("cleanup-temp-uploads")
+@with_appcontext
+def cleanup_temp_uploads_command():
+    from app.services.analytics.storage import cleanup_stale_temp_uploads
+
+    deleted = cleanup_stale_temp_uploads(
+        upload_folder=current_app.config["UPLOAD_FOLDER"],
+        temp_subfolder=current_app.config["DATASET_TEMP_SUBFOLDER"],
+        max_age_hours=current_app.config["DATASET_TEMP_MAX_AGE_HOURS"],
+    )
+    click.echo(f"Deleted {deleted} stale temp upload(s).")
+
+
 def register_cli(app):
     app.cli.add_command(create_admin_command)
+    app.cli.add_command(cleanup_temp_uploads_command)

@@ -58,9 +58,15 @@ def _format_columns_for_prompt(context: dict) -> str:
     return "\n".join(lines)
 
 
-def ask_question(provider_manager, df: pd.DataFrame, dataset_name: str, question: str, user_id=None) -> dict:
+def _plan_and_compute(provider_manager, df: pd.DataFrame, dataset_name: str, question: str, user_id=None) -> dict:
     """
-    Returns {"answer": str, "computed_result": dict|None, "plan": dict|None}.
+    Runs steps 1-3 (plan -> validate -> execute) and builds the bounded
+    context that step 4 (explanation) will be grounded in. Shared by both
+    the blocking `ask_question()` and the streaming `prepare_stream()`
+    paths below, so the "never invent a number" pipeline only exists in
+    one place.
+
+    Returns {"explain_context": dict, "plan": dict|None, "computed_result": dict|None}.
     """
     context = build_dataset_context(df, dataset_name=dataset_name)
 
@@ -102,15 +108,39 @@ def ask_question(provider_manager, df: pd.DataFrame, dataset_name: str, question
     if computed_result and computed_result.get("operation") != "none":
         explain_context["computed_result"] = computed_result
 
+    return {"explain_context": explain_context, "plan": plan, "computed_result": computed_result}
+
+
+def ask_question(provider_manager, df: pd.DataFrame, dataset_name: str, question: str, user_id=None) -> dict:
+    """
+    Returns {"answer": str, "computed_result": dict|None, "plan": dict|None}.
+    """
+    planned = _plan_and_compute(provider_manager, df, dataset_name, question, user_id)
+
     answer_response = provider_manager.analyze(
-        explain_context, question, user_id=user_id, use_cache=False,
+        planned["explain_context"], question, user_id=user_id, use_cache=False,
     )
 
     return {
         "answer": answer_response.text,
-        "computed_result": computed_result,
-        "plan": plan,
+        "computed_result": planned["computed_result"],
+        "plan": planned["plan"],
     }
+
+
+def prepare_stream(provider_manager, df: pd.DataFrame, dataset_name: str, question: str, user_id=None) -> dict:
+    """
+    Runs the plan -> validate -> execute steps synchronously (fast — no
+    reason to stream Pandas execution), and returns everything the caller
+    needs to *then* stream just the final explanation via
+    `provider_manager.stream_analyze(explain_context, question, ...)`.
+
+    Splitting it this way (rather than making the whole pipeline one
+    generator) is what lets the route persist `computed_result` alongside
+    the eventually-accumulated streamed text, since a generator can't also
+    return a value once it starts yielding.
+    """
+    return _plan_and_compute(provider_manager, df, dataset_name, question, user_id)
 
 
 # ---------------------------------------------------------------------------

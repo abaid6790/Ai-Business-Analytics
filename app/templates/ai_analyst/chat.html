@@ -49,6 +49,7 @@
 {% block extra_scripts %}
 <script>
     const CHAT_ASK_URL = "{{ url_for('ai_analyst.chat_ask', dataset_id=dataset.id) }}";
+    const CHAT_ASK_STREAM_URL = "{{ url_for('ai_analyst.chat_ask_stream', dataset_id=dataset.id) }}";
     let CONVERSATION_ID = {{ conversation.id | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/ai_chat.js') }}"></script>
