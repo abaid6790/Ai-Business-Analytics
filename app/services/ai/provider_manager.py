@@ -10,13 +10,13 @@ to call for AI requests (spec section 18). It ties together:
   - Usage tracking (spec 23): every attempt is logged to AIUsage.
   - Daily/monthly limits (spec 23): checked before any provider is called.
 
-NOTE on process boundaries: cache and Gemini key-rotation state both live
-in-process (see cache.py / gemini_key_manager.py). Under gunicorn with
-multiple workers, each worker has its own view of key cooldowns and cache
-contents. That's an acceptable MVP trade-off — behavior is still correct
-(worst case: a cooling-down key gets retried once by a different worker),
-just not perfectly coordinated. Moving state to Redis is a scoped follow-up
-that doesn't change any of the logic here.
+NOTE on process boundaries: cache and Gemini key-rotation state default to
+in-process storage (see cache.py / key_state_store.py) — zero setup, but
+under gunicorn with multiple workers each worker has its own view. Setting
+REDIS_URL switches both to Redis-backed implementations automatically, so
+every worker/container shares one consistent view. Either way the
+rotation/caching *logic* here is identical — only the storage backend
+changes.
 """
 
 import time
@@ -28,8 +28,9 @@ from app.services.ai.base_provider import (
     ProviderTransientError,
     build_analyze_prompt,
 )
-from app.services.ai.cache import InMemoryResponseCache, build_cache_key
+from app.services.ai.cache import InMemoryResponseCache, RedisResponseCache, build_cache_key
 from app.services.ai.gemini_key_manager import GeminiKeyManager
+from app.services.ai.key_state_store import InMemoryKeyStateStore, RedisKeyStateStore
 from app.services.ai.groq_provider import GroqProvider
 from app.services.ai.openrouter_provider import OpenRouterProvider
 from app.services.ai.claude_provider import ClaudeProvider
@@ -57,15 +58,21 @@ class AIProviderManager:
         """
         self.config = config
         self.provider_order = config.get("AI_PROVIDER_ORDER") or ["gemini"]
-        self.cache = cache if cache is not None else InMemoryResponseCache()
+        self._redis_client = _build_redis_client(config)
+        self.cache = cache if cache is not None else self._build_cache()
         self.usage_logger = usage_logger or _default_usage_logger
-        self.providers = self._build_providers(config)
+        self.providers = self._build_providers(config, self._redis_client)
+
+    def _build_cache(self):
+        if self._redis_client is not None:
+            return RedisResponseCache(self._redis_client)
+        return InMemoryResponseCache()
 
     # ------------------------------------------------------------------
     # Provider construction
     # ------------------------------------------------------------------
     @staticmethod
-    def _build_providers(config):
+    def _build_providers(config, redis_client=None):
         """Only providers with an API key actually configured are included
         — an entry present in AI_PROVIDER_ORDER but missing its key is
         silently skipped rather than erroring at startup, so partial
@@ -74,8 +81,10 @@ class AIProviderManager:
 
         gemini_keys = config.get("GEMINI_API_KEYS") or []
         if gemini_keys:
+            state_store = RedisKeyStateStore(redis_client) if redis_client is not None else InMemoryKeyStateStore(gemini_keys)
             providers["gemini"] = GeminiKeyManager(
-                api_keys=gemini_keys, model=config.get("GEMINI_MODEL", "gemini-1.5-flash")
+                api_keys=gemini_keys, model=config.get("GEMINI_MODEL", "gemini-1.5-flash"),
+                state_store=state_store,
             )
 
         if config.get("GROQ_API_KEY"):
@@ -325,3 +334,23 @@ def _default_usage_logger(record):
     )
     db.session.add(usage)
     db.session.commit()
+
+
+def _build_redis_client(config):
+    """Returns a connected redis.Redis client if REDIS_URL is configured
+    and reachable, else None — in which case the manager transparently
+    falls back to in-process cache/key-state storage. A misconfigured or
+    temporarily-down Redis should degrade gracefully, not crash app
+    startup, since Redis is an optional coordination layer here, not a
+    hard dependency."""
+    redis_url = config.get("REDIS_URL")
+    if not redis_url:
+        return None
+
+    try:
+        import redis
+        client = redis.from_url(redis_url, socket_connect_timeout=2, socket_timeout=2)
+        client.ping()
+        return client
+    except Exception:
+        return None

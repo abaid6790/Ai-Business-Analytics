@@ -156,7 +156,7 @@ sequenceDiagram
 
 **Fallback order:** configurable via `AI_PROVIDER_ORDER` (or live-editable by an admin in the AI Providers panel). A permanent/user error (bad prompt) never triggers fallback — only rate-limit/transient/auth errors do, per the reasoning that retrying a broken request against a different provider just wastes a call.
 
-**Response caching & usage limits:** identical (provider, model, prompt, context) requests are cached; every attempt is logged to `AIUsage`; daily/monthly per-user limits are enforced before any provider is called, and cache hits don't count against them.
+**Response caching & usage limits:** identical (provider, model, prompt, context) requests are cached; every attempt is logged to `AIUsage`; daily/monthly per-user limits are enforced before any provider is called, and cache hits don't count against them. Both the cache and Gemini's key-rotation state default to in-process storage (zero setup) and automatically switch to Redis-backed implementations when `REDIS_URL` is set — same logic either way, just shared across workers instead of siloed per worker.
 
 **Controlled execution, not arbitrary code:** the AI never generates or executes Python/Pandas code. It only ever names one of a fixed set of whitelisted operations (`aggregate`, `top_n`, `correlation`, `trend`, ...) plus column names, which are validated against the actual dataset before anything runs (`app/services/analytics/query_executor.py`).
 
@@ -340,7 +340,7 @@ Put a reverse proxy (nginx, Caddy) in front for TLS termination and static file 
    0 * * * * cd /path/to/ai-business-analytics && /path/to/venv/bin/flask cleanup-temp-uploads >> logs/cleanup.log 2>&1
    ```
 
-**Known multi-worker limitations (documented, not silently ignored):** the Gemini key-rotation state, the AI response cache, and the ML background thread pool all currently live in-process. Under gunicorn with multiple workers, each worker has its own view of these — correct behavior, just not perfectly coordinated (e.g. a cooling-down key might get retried once by a different worker). Moving this state to Redis is a scoped follow-up that doesn't require changing any of the underlying logic.
+**Known multi-worker limitation (documented, not silently ignored):** the ML background thread pool still lives in-process per worker — training runs are only visible to the worker that started them. Gemini key rotation and the AI response cache are no longer subject to this: setting `REDIS_URL` (the `docker compose` stack does this automatically) shares both correctly across every worker/container. Set `RATELIMIT_STORAGE_URI` to the same Redis instance too if running multiple workers, so rate limits are also shared rather than per-process.
 
 ## Security
 
@@ -360,7 +360,6 @@ Put a reverse proxy (nginx, Caddy) in front for TLS termination and static file 
 
 ## Future improvements
 
-- Move Gemini key-rotation state, the AI response cache, and rate-limit storage to Redis for correct coordination across multiple worker processes.
 - Replace the `ThreadPoolExecutor`-based ML job runner with Celery/RQ for true multi-process background processing and job persistence across restarts.
 - Object storage (S3-compatible) backend for uploads/models/reports — the storage layer is already abstracted behind `LocalStorage`, so this is a swap-in, not a rewrite.
 - Real-time SHAP explanations capped more intelligently for very large datasets (currently a fixed sample-size cap).

@@ -88,6 +88,15 @@ class BaseConfig:
     AI_RATE_LIMIT = os.environ.get("AI_RATE_LIMIT", "20 per minute")
     ML_TRAIN_RATE_LIMIT = os.environ.get("ML_TRAIN_RATE_LIMIT", "5 per minute")
 
+    # --- Redis (optional) ---
+    # When set, the Gemini key-rotation state and the AI response cache
+    # move from per-process memory to Redis, so multiple gunicorn workers
+    # (or containers) share one consistent view instead of each worker
+    # having its own. Left blank, everything falls back to the in-process
+    # implementations that have been in place since Phase 7 — the app
+    # works identically either way, just without cross-worker coordination.
+    REDIS_URL = os.environ.get("REDIS_URL")
+
     # --- Session / cookies ---
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"

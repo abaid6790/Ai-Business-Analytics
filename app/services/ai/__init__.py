@@ -31,6 +31,7 @@ def _build_manager_config(app) -> dict:
         "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL",
         "OPENAI_API_KEY", "OPENAI_MODEL",
         "AI_DAILY_REQUEST_LIMIT_PER_USER", "AI_MONTHLY_REQUEST_LIMIT_PER_USER",
+        "REDIS_URL",
     )
     config = {key: app.config.get(key) for key in keys}
     config["usage_checker"] = _make_usage_checker()
