@@ -1,369 +1,1434 @@
-# AI Business Analytics Platform
+# 🤖 AI Business Analytics Platform
 
-A multi-user SaaS web application that lets people upload a CSV/Excel dataset and get automatic data cleaning, exploratory analysis, AI-powered insights and Q&A, anomaly detection, machine-learning predictions, forecasting, and exportable reports — without writing code.
+> **Turn raw data into insights, predictions, forecasts, and decisions — without writing code.**
 
-Built with Flask, Pandas, scikit-learn/XGBoost, and a provider-agnostic AI layer (Gemini by default, with Groq/OpenRouter/Claude/OpenAI as configurable fallbacks).
+A full-stack, multi-user SaaS analytics platform that allows users to upload **CSV and Excel datasets**, automatically clean and analyze their data, ask questions using natural language, detect anomalies, train machine-learning models, generate forecasts, and export professional reports.
 
-**Status:** All 14 planned phases complete. 332 automated tests passing.
-
----
-
-## Table of contents
-
-- [Features](#features)
-- [Architecture](#architecture)
-- [AI architecture](#ai-architecture)
-- [ML pipeline](#ml-pipeline)
-- [Project structure](#project-structure)
-- [Installation](#installation)
-- [Environment configuration](#environment-configuration)
-- [Database setup](#database-setup)
-- [Running locally](#running-locally)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Security](#security)
-- [Future improvements](#future-improvements)
-- [License](#license)
+Built with **Flask, Pandas, scikit-learn, XGBoost, SHAP, PostgreSQL/SQLite, and a provider-agnostic AI architecture** with Google Gemini as the default provider.
 
 ---
 
-## Features
+## ✨ Overview
 
-**Accounts & workspace**
-- Registration with email verification, login/logout, forgot/reset password, change password, account deletion — all data-isolated per user.
-- Admin panel: user management (disable/delete), global activity logs, AI provider monitoring, live-editable usage limits and provider fallback order.
+The **AI Business Analytics Platform** brings the complete data-analysis workflow into one web application.
 
-**Data**
-- Drag-and-drop CSV/XLSX/XLS upload with a live preview and data-quality summary before you commit.
-- Automatic data cleaning: missing values, duplicates, outliers, type conversion, column removal — always writes a new file, never touches the original.
-- Automatic EDA: descriptive statistics, correlation heatmap, and auto-suggested charts based on column types.
-- Interactive chart builder (bar/line/area/pie/scatter/histogram) with filters and aggregation, saved and reusable.
+Instead of manually moving between spreadsheets, Python notebooks, visualization tools, and AI assistants, users can:
 
-**AI**
-- Ask questions about your data in plain English, with the answer streamed to you as it's generated — the AI is never allowed to invent a number. It proposes a computation plan, the plan is validated against a whitelist, Pandas executes it, and only the *real, computed result* is fed back to the AI to explain in words.
-- One-click automatic insights, grounded the same way.
-- Provider-agnostic: Gemini by default, with automatic multi-key rotation and fallback to Groq/OpenRouter/Claude/OpenAI if configured. See [AI architecture](#ai-architecture).
+**Upload → Clean → Explore → Ask → Analyze → Predict → Forecast → Report**
 
-**Analytics**
-- Anomaly detection via IQR, Z-score, or Isolation Forest (multivariate), with per-row scoring and visualization.
-- Machine learning: automatic classification/regression detection, 9 algorithms trained and compared per run (Logistic Regression, Decision Tree, Random Forest, Gradient Boosting, XGBoost for classification; Linear, Random Forest, Gradient Boosting, XGBoost for regression), leakage-safe pipelines, cross-validation, SHAP-based explainability with a built-in fallback, and a working prediction form.
-- Forecasting: automatic trend/seasonality detection and Holt-Winters / Holt-linear / linear-regression forecasting with approximate confidence bands — only shown for datasets that actually have a date + numeric column.
+### Why this project?
 
-**Reports & organization**
-- Saved Projects group related datasets, charts, and reports together.
-- Report generator pulls together the dataset overview, data quality, EDA, saved charts, AI insights, and ML results into one report, exportable as PDF, Excel, CSV, or JSON.
-- Personal History page and, for admins, a global system log.
+Traditional business analytics often requires:
+
+* Python or SQL knowledge
+* Manual data cleaning
+* Separate visualization tools
+* Data-science expertise
+* Machine-learning knowledge
+* Manual report preparation
+
+This platform automates those workflows through an easy-to-use web interface.
 
 ---
 
-## Architecture
+## 🚀 Key Highlights
+
+| Capability                   | Included |
+| ---------------------------- | -------- |
+| 📂 CSV / Excel Upload        | ✅        |
+| 🧹 Automatic Data Cleaning   | ✅        |
+| 📊 Exploratory Data Analysis | ✅        |
+| 📈 Interactive Charts        | ✅        |
+| 🤖 AI Data Q&A               | ✅        |
+| 💡 Automatic AI Insights     | ✅        |
+| 🚨 Anomaly Detection         | ✅        |
+| 🧠 Machine Learning          | ✅        |
+| 🔮 Forecasting               | ✅        |
+| 📑 Report Generation         | ✅        |
+| 👤 Multi-user Data Isolation | ✅        |
+| 🔐 Authentication & Security | ✅        |
+| ⚙️ Admin Panel               | ✅        |
+| 🔄 AI Provider Fallback      | ✅        |
+| 🔑 Gemini Multi-Key Rotation | ✅        |
+| 💾 SQLite / PostgreSQL       | ✅        |
+| 🐳 Docker Deployment         | ✅        |
+| 🧪 Automated Testing         | ✅        |
+
+**Project status:** `14/14 planned phases complete`
+**Automated tests:** `332 passing`
+
+---
+
+# 🖥️ Screenshots
+
+> Screenshots are stored inside the project's `screenshots/` directory.
+
+### Dashboard
+
+![AI Business Analytics Dashboard](screenshots/Dashboard.png)
+
+### Dataset Analysis
+
+![Dataset Analysis](screenshots/Analytics.png)
+
+### Exploratory Data Analysis
+
+![Exploratory Data Analysis](screenshots/eda.png)
+
+### AI Data Q&A
+
+![AI Data Q\&A](screenshots/AI_Analysts.png)
+
+### Machine Learning
+
+![Machine Learning](screenshots/ml-models.png)
+
+### Forecasting
+
+![Forecasting](screenshots/Forecasting.png)
+
+### Reports
+
+![Reports](screenshots/Reports.png)
+
+> **Screenshot path convention:** all images use relative paths such as `screenshots/Dashboard.png`, so they work correctly on GitHub and when the repository is cloned locally.
+> Replace the filenames above with the **exact filenames already present in your `screenshots/` folder** if they differ.
+
+---
+
+# 🧩 Core Features
+
+## 👤 Authentication & Workspace
+
+Complete account management system with isolated user workspaces.
+
+* User registration
+* Email verification
+* Login / logout
+* Forgot password
+* Password reset
+* Change password
+* Account deletion
+* Session management
+* User-specific datasets
+* User-specific projects
+* User-specific charts
+* User-specific reports
+* Cross-user data isolation
+
+Every user-owned resource is protected through centralized ownership checks.
+
+---
+
+## 🗂️ Data Management
+
+Upload business datasets directly from the browser.
+
+### Supported formats
+
+* CSV
+* XLSX
+* XLS
+
+### Upload workflow
+
+```text
+Upload Dataset
+      ↓
+File Validation
+      ↓
+Preview
+      ↓
+Data Quality Analysis
+      ↓
+Commit Dataset
+      ↓
+Analytics
+```
+
+The upload system includes:
+
+* Drag-and-drop upload
+* File preview
+* Column detection
+* Data-type detection
+* Missing-value analysis
+* Duplicate detection
+* Outlier detection
+* File-size validation
+* Extension validation
+* Magic-byte validation
+* User-isolated storage
+
+---
+
+# 🧹 Automatic Data Cleaning
+
+The platform can automatically clean datasets without modifying the original uploaded file.
+
+### Cleaning operations
+
+* Missing-value handling
+* Duplicate removal
+* Outlier handling
+* Data-type conversion
+* Column removal
+* Data normalization where applicable
+
+### Immutable source data
+
+Cleaning always creates a **new processed dataset**.
+
+```text
+Original Dataset
+      │
+      ├── remains unchanged
+      │
+      └── Clean Dataset
+              │
+              ├── EDA
+              ├── Charts
+              ├── AI Analysis
+              ├── ML
+              └── Forecasting
+```
+
+This preserves the original dataset for auditing and comparison.
+
+---
+
+# 📊 Exploratory Data Analysis
+
+Automatically generate useful statistical information from uploaded datasets.
+
+### Includes
+
+* Dataset overview
+* Row and column counts
+* Data types
+* Missing values
+* Duplicate counts
+* Descriptive statistics
+* Numerical summaries
+* Categorical summaries
+* Correlation analysis
+* Correlation heatmap
+* Automatic chart suggestions
+
+The system identifies suitable visualizations based on column types.
+
+---
+
+# 📈 Interactive Chart Builder
+
+Users can create and save reusable charts directly from the application.
+
+### Supported visualizations
+
+* Bar charts
+* Line charts
+* Area charts
+* Pie charts
+* Scatter plots
+* Histograms
+
+### Chart capabilities
+
+* Column selection
+* Aggregation
+* Filtering
+* Grouping
+* Saved charts
+* Reusable visualizations
+
+---
+
+# 🤖 AI Data Analyst
+
+One of the core features of the platform is the **AI Data Analyst**.
+
+Users can ask questions about their dataset using natural language.
+
+### Example questions
+
+```text
+Which product has the highest revenue?
+
+What is the average sales value?
+
+Show me the top 10 customers.
+
+Which month had the highest sales?
+
+What is the correlation between price and quantity?
+
+Are there unusual transactions?
+
+What trend can you see in the data?
+```
+
+The system does **not** simply ask an LLM to guess an answer.
+
+Instead:
+
+```text
+User Question
+      ↓
+AI creates computation plan
+      ↓
+Plan validation
+      ↓
+Whitelist verification
+      ↓
+Real Pandas computation
+      ↓
+Computed result
+      ↓
+AI explanation
+      ↓
+Final answer
+```
+
+### 🔒 Anti-hallucination design
+
+The AI does not generate arbitrary Python or Pandas code.
+
+It can only request predefined analytical operations such as:
+
+* `aggregate`
+* `top_n`
+* `correlation`
+* `trend`
+* `summary`
+* and other whitelisted operations
+
+The requested operation and columns are validated against the actual dataset before execution.
+
+The final explanation receives the **real computed result**, not an AI-generated number.
+
+---
+
+# 💡 Automatic AI Insights
+
+Users can generate insights automatically with one click.
+
+Insights are grounded using the same controlled computation pipeline used by AI Q&A.
+
+This allows the system to identify meaningful patterns while keeping numerical claims tied to actual dataset calculations.
+
+---
+
+# 🔌 Provider-Agnostic AI Architecture
+
+The application is designed so that AI providers can be changed without rewriting the application.
+
+### Supported providers
+
+* Google Gemini
+* Groq
+* OpenRouter
+* Anthropic Claude
+* OpenAI
+
+Every provider follows the same interface:
+
+```text
+generate()
+generate_json()
+stream()
+analyze()
+```
+
+All AI calls are routed through:
+
+```text
+AIProviderManager
+```
+
+Routes and business services never directly depend on a specific AI provider.
+
+---
+
+# 🔑 Gemini Multi-Key Rotation
+
+The platform supports up to four Gemini API keys:
+
+```env
+GEMINI_API_KEY_1=
+GEMINI_API_KEY_2=
+GEMINI_API_KEY_3=
+GEMINI_API_KEY_4=
+```
+
+Keys are selected using deterministic round-robin rotation.
+
+```text
+Request
+   ↓
+Gemini Key 1
+   ↓
+Rate Limited?
+   ├── No → Response
+   │
+   └── Yes
+        ↓
+     Key 2
+        ↓
+     Key 3
+        ↓
+     Key 4
+```
+
+A rate-limited or authentication-failing key enters cooldown and is temporarily skipped.
+
+---
+
+# 🔄 AI Provider Fallback
+
+The provider order can be configured through:
+
+```env
+AI_PROVIDER_ORDER=gemini,groq,openrouter,claude,openai
+```
+
+Example:
+
+```text
+Gemini
+   ↓
+Groq
+   ↓
+OpenRouter
+   ↓
+Claude
+   ↓
+OpenAI
+```
+
+Fallback occurs for appropriate transient, rate-limit, or authentication failures.
+
+Invalid user requests are not blindly retried against every provider.
+
+---
+
+# ⚡ AI Response Caching
+
+Repeated AI requests can be served from cache.
+
+Cache identity is based on relevant request information such as:
+
+```text
+Provider
+Model
+Prompt
+Context
+```
+
+### Cache behavior
+
+```text
+AI Request
+    ↓
+Cache lookup
+    ├── Hit → Return cached result
+    │
+    └── Miss
+          ↓
+       Provider
+          ↓
+       Response
+          ↓
+       Cache
+```
+
+The cache can use:
+
+* In-process storage for simple deployments
+* Redis for multi-worker deployments
+
+Configure Redis with:
+
+```env
+REDIS_URL=redis://localhost:6379/0
+```
+
+---
+
+# 🚨 Anomaly Detection
+
+The platform provides multiple anomaly-detection techniques.
+
+### Available methods
+
+#### IQR
+
+Useful for identifying statistical outliers in numerical data.
+
+#### Z-Score
+
+Identifies observations that significantly deviate from the mean.
+
+#### Isolation Forest
+
+Supports multivariate anomaly detection.
+
+Results include:
+
+* Anomaly status
+* Per-row scoring
+* Visualization
+* Identified unusual records
+
+---
+
+# 🧠 Machine Learning
+
+The ML module automatically detects whether a problem is primarily:
+
+* Classification
+* Regression
+
+The platform trains and compares multiple algorithms.
+
+### Classification
+
+* Logistic Regression
+* Decision Tree
+* Random Forest
+* Gradient Boosting
+* XGBoost
+
+### Regression
+
+* Linear Regression
+* Random Forest
+* Gradient Boosting
+* XGBoost
+
+---
+
+# 🧪 Leakage-Safe ML Pipeline
+
+Preprocessing is implemented inside the machine-learning pipeline.
+
+```text
+Dataset
+   ↓
+Target Selection
+   ↓
+Classification / Regression Detection
+   ↓
+ColumnTransformer
+   ├── Missing-value imputation
+   ├── Numerical scaling
+   └── Categorical encoding
+   ↓
+Estimator
+   ↓
+Cross Validation
+   ↓
+Evaluation
+   ↓
+Model Ranking
+```
+
+This prevents preprocessing from leaking information from the test set into training.
+
+---
+
+# 📏 Model Evaluation
+
+### Classification metrics
+
+* Accuracy
+* F1 Score
+* ROC-AUC
+
+### Regression metrics
+
+* MAE
+* RMSE
+* R²
+
+Models are ranked automatically so users can identify the strongest candidate.
+
+---
+
+# 🔍 Explainable AI
+
+The platform integrates **SHAP-based feature importance**.
+
+Users can understand which features contribute most to model predictions.
+
+A built-in fallback is available when SHAP cannot be used for a particular model or dataset.
+
+---
+
+# 🎯 Prediction Form
+
+After training a model, users can enter new feature values through a web-based prediction interface.
+
+```text
+Select Trained Model
+        ↓
+Enter Feature Values
+        ↓
+Validate Input
+        ↓
+Run Prediction
+        ↓
+Display Result
+```
+
+---
+
+# 🔮 Forecasting
+
+Forecasting is available for datasets containing:
+
+* A valid date/time column
+* A numerical target column
+
+The system analyzes:
+
+* Trend
+* Seasonality
+* Historical behavior
+
+### Forecasting methods
+
+* Holt-Winters
+* Holt Linear
+* Linear Regression
+
+Approximate confidence bands are displayed where appropriate.
+
+---
+
+# 📁 Projects & Organization
+
+Users can organize analytical work into saved projects.
+
+Projects can contain related:
+
+* Datasets
+* Charts
+* AI insights
+* ML results
+* Forecasting results
+* Reports
+
+This makes the platform suitable for repeated business-analysis workflows.
+
+---
+
+# 📑 Report Generation
+
+The report generator combines analytical results into a single exportable report.
+
+Reports can include:
+
+* Dataset overview
+* Data quality
+* EDA
+* Charts
+* AI insights
+* ML results
+* Forecasting results
+
+### Export formats
+
+| Format | Supported |
+| ------ | --------- |
+| PDF    | ✅         |
+| Excel  | ✅         |
+| CSV    | ✅         |
+| JSON   | ✅         |
+
+---
+
+# 🛡️ Security
+
+Security is treated as a first-class part of the application.
+
+### Authentication
+
+* Werkzeug password hashing
+* Email verification
+* Secure password reset
+* Session protection
+
+### CSRF protection
+
+Flask-WTF CSRF protection is applied to forms and AJAX requests.
+
+### Rate limiting
+
+Rate limits protect resource-intensive endpoints including:
+
+* Authentication
+* Dataset uploads
+* AI Q&A
+* AI insights
+* ML training
+
+### File security
+
+Uploads are validated using:
+
+* Extension whitelist
+* Magic-byte inspection
+* File-size limits
+* Isolated temporary storage
+* Per-user permanent storage
+
+A renamed executable pretending to be a CSV is rejected.
+
+### XSS protection
+
+* Jinja2 auto-escaping
+* Explicit JavaScript `escapeHtml()` handling for dynamically inserted values
+
+### Secure cookies
+
+Production cookies support:
+
+```text
+HttpOnly
+SameSite=Lax
+Secure
+```
+
+### AI security
+
+The AI layer:
+
+* Does not receive passwords
+* Does not receive authentication secrets
+* Does not execute generated Python
+* Does not execute generated Pandas code
+* Receives bounded/pre-computed dataset information rather than unrestricted raw data
+
+---
+
+# 👑 Admin Panel
+
+Administrators have access to a dedicated management area.
+
+### Admin capabilities
+
+* User management
+* Disable users
+* Delete users
+* Global activity logs
+* AI provider monitoring
+* Usage-limit management
+* Provider fallback configuration
+
+API keys are never displayed directly in the admin interface.
+
+Only a short identifying suffix is exposed where required.
+
+---
+
+# 🏗️ Architecture
 
 ```mermaid
 flowchart TB
-    subgraph Client
-        Browser[Browser / Bootstrap UI]
-    end
+
+    Browser["Browser / Bootstrap UI"]
 
     subgraph Flask["Flask Application"]
-        Routes[Blueprints / Routes]
-        Forms[WTForms]
-        Services[Service Layer]
+        Routes["Blueprints / Routes"]
+        Forms["WTForms"]
+        Services["Service Layer"]
     end
 
-    subgraph Services["app/services/"]
-        Analytics[analytics/<br/>profiling, cleaning, EDA,<br/>charts, anomalies, queries]
-        MLSvc[ml/<br/>pipelines, training,<br/>evaluation, SHAP]
-        ForecastSvc[forecasting/<br/>trend, seasonality,<br/>Holt-Winters]
-        ReportSvc[reports/<br/>PDF/Excel/CSV/JSON export]
-        AISvc[ai/<br/>AIProviderManager]
+    subgraph Core["Application Services"]
+        Analytics["Analytics<br/>Cleaning / EDA / Charts / Anomalies"]
+        ML["Machine Learning<br/>Training / Evaluation / SHAP"]
+        Forecast["Forecasting<br/>Trend / Seasonality"]
+        Reports["Reports<br/>PDF / Excel / CSV / JSON"]
+        AI["AIProviderManager"]
     end
 
-    subgraph AIProviders["AI Providers"]
-        Gemini[Gemini<br/>multi-key rotation]
-        Groq[Groq]
-        OpenRouter[OpenRouter]
-        Claude[Claude]
-        OpenAI[OpenAI]
+    subgraph Providers["AI Providers"]
+        Gemini["Google Gemini"]
+        Groq["Groq"]
+        OpenRouter["OpenRouter"]
+        Claude["Anthropic Claude"]
+        OpenAI["OpenAI"]
     end
 
-    DB[(PostgreSQL / SQLite)]
-    FS[(Local file storage<br/>uploads / models / reports)]
-    Mail[SMTP]
+    Database[("PostgreSQL / SQLite")]
+    Storage[("Local File Storage")]
+    Redis[("Redis")]
+    SMTP["SMTP"]
 
-    Browser <--> Routes
+    Browser --> Routes
     Routes --> Forms
     Routes --> Services
-    Analytics --> DB
-    MLSvc --> DB
-    MLSvc --> FS
-    ReportSvc --> FS
-    AISvc --> Gemini
-    AISvc -.fallback.-> Groq
-    AISvc -.fallback.-> OpenRouter
-    AISvc -.fallback.-> Claude
-    AISvc -.fallback.-> OpenAI
-    Routes --> DB
-    Routes --> Mail
-```
 
-**Key design decisions:**
-- **Every AI request goes through one class, `AIProviderManager`.** No route or service ever imports a specific provider directly — this is what makes "add a new AI provider" a config change, not a code change.
-- **Every user-owned resource is fetched through `get_owned_or_404()` / `owner_scoped_query()`.** This is the single choke point that guarantees one user can never read or modify another user's data.
-- **Cleaning never mutates the original file.** A cleaned dataset is always a new `Dataset` row pointing at a new file, linked back via `source_dataset_id`.
-- **The AI Data Analyst never invents numbers.** User questions go through plan -> validate -> execute (real Pandas) -> explain, with the computed result injected into the AI's context for the final explanation.
-- **Background ML training** runs on a thread pool so the request returns immediately; the UI polls for status. Documented as an MVP choice — moving to Celery/RQ for multi-worker deployments doesn't require changing any training logic, only how it's invoked.
+    Services --> Analytics
+    Services --> ML
+    Services --> Forecast
+    Services --> Reports
+    Services --> AI
+
+    Analytics --> Database
+    ML --> Database
+    ML --> Storage
+    Reports --> Storage
+
+    AI --> Gemini
+    AI -. fallback .-> Groq
+    AI -. fallback .-> OpenRouter
+    AI -. fallback .-> Claude
+    AI -. fallback .-> OpenAI
+
+    Routes --> Database
+    Routes --> SMTP
+
+    AI -. optional .-> Redis
+```
 
 ---
 
-## AI architecture
+# 🧠 AI Request Architecture
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant R as Flask Route
-    participant M as AIProviderManager
-    participant C as Response Cache
-    participant G as Gemini Key Pool
-    participant F as Fallback Provider
 
-    U->>R: Ask a question
-    R->>M: generate_json(plan_prompt)
-    M->>C: cache hit?
-    alt cache hit
-        C-->>M: cached response
-    else cache miss
-        M->>G: try key 1
-        alt rate limited
-            G->>G: cooldown key 1, try key 2
+    participant User
+    participant Flask
+    participant Manager as AIProviderManager
+    participant Cache
+    participant Gemini
+    participant Fallback
+    participant Pandas
+
+    User->>Flask: Ask data question
+
+    Flask->>Manager: Generate computation plan
+
+    Manager->>Cache: Check cache
+
+    alt Cache hit
+        Cache-->>Manager: Cached result
+    else Cache miss
+        Manager->>Gemini: Request plan
+
+        alt Gemini key fails
+            Manager->>Gemini: Try next available key
         end
-        alt all Gemini keys exhausted
-            M->>F: fall back to next provider in order
+
+        alt All Gemini keys fail
+            Manager->>Fallback: Try configured provider
         end
-        G-->>M: response
-        M->>C: store in cache
+
+        Manager->>Cache: Store response
     end
-    M-->>R: plan JSON
-    R->>R: validate_plan against whitelist
-    R->>R: execute_plan with real Pandas
-    R->>M: analyze(computed_result, question)
-    M-->>R: grounded explanation
-    R-->>U: answer (never an invented number)
+
+    Manager-->>Flask: Validated plan
+
+    Flask->>Flask: Validate whitelist
+
+    Flask->>Pandas: Execute real computation
+
+    Pandas-->>Flask: Computed result
+
+    Flask->>Manager: Explain computed result
+
+    Manager-->>Flask: Grounded explanation
+
+    Flask-->>User: Final answer
 ```
-
-**Supported providers:** Gemini (default), Groq, OpenRouter, Claude (Anthropic), OpenAI — all implementing the same `generate()` / `generate_json()` / `stream()` / `analyze()` interface (`app/services/ai/base_provider.py`).
-
-**Gemini multi-key rotation:** configure up to 4 keys (`GEMINI_API_KEY_1..4`). Requests round-robin across available keys (never random); a rate-limited or auth-failing key is cooled down and skipped until it recovers, and the pool only surfaces a failure to the fallback chain once every key has been tried.
-
-**Fallback order:** configurable via `AI_PROVIDER_ORDER` (or live-editable by an admin in the AI Providers panel). A permanent/user error (bad prompt) never triggers fallback — only rate-limit/transient/auth errors do, per the reasoning that retrying a broken request against a different provider just wastes a call.
-
-**Response caching & usage limits:** identical (provider, model, prompt, context) requests are cached; every attempt is logged to `AIUsage`; daily/monthly per-user limits are enforced before any provider is called, and cache hits don't count against them. Both the cache and Gemini's key-rotation state default to in-process storage (zero setup) and automatically switch to Redis-backed implementations when `REDIS_URL` is set — same logic either way, just shared across workers instead of siloed per worker.
-
-**Controlled execution, not arbitrary code:** the AI never generates or executes Python/Pandas code. It only ever names one of a fixed set of whitelisted operations (`aggregate`, `top_n`, `correlation`, `trend`, ...) plus column names, which are validated against the actual dataset before anything runs (`app/services/analytics/query_executor.py`).
 
 ---
 
-## ML pipeline
+# 🤖 ML Pipeline
 
 ```mermaid
 flowchart LR
-    A[Select target column] --> B[Auto-detect<br/>classification vs regression]
-    B --> C[Build leakage-safe Pipeline<br/>ColumnTransformer + estimator]
-    C --> D[Train/test split<br/>+ cross-validation]
-    D --> E[Fit each of 9 algorithms<br/>on a background thread]
-    E --> F[Evaluate:<br/>accuracy/F1/ROC-AUC or<br/>MAE/RMSE/R2]
-    F --> G[SHAP feature importance<br/>with built-in fallback]
-    G --> H[Rank models,<br/>flag the best]
-    H --> I[Prediction form<br/>+ report inclusion]
-```
 
-Imputation, scaling, and one-hot encoding are always fit *inside* the pipeline, so cross-validation and the train/test split each refit preprocessing from scratch per fold — never peeking at test data.
+    A["Select Target"] --> B["Detect Task Type"]
+
+    B --> C["Build Leakage-Safe Pipeline"]
+
+    C --> D["Train/Test Split"]
+
+    D --> E["Cross Validation"]
+
+    E --> F["Train Multiple Models"]
+
+    F --> G["Evaluate Models"]
+
+    G --> H["SHAP Explainability"]
+
+    H --> I["Rank Models"]
+
+    I --> J["Prediction Form"]
+
+    J --> K["Report"]
+```
 
 ---
 
-## Project structure
+# 📂 Project Structure
 
-```
+```text
 ai-business-analytics/
-    app.py                  # WSGI entry point
-    config.py                # Environment-based config (Dev/Testing/Production)
-    requirements.txt
-    .env.example
-    app/
-        __init__.py           # App factory
-        extensions.py         # Shared Flask extension instances
-        cli.py                 # flask create-admin
-        models/                 # SQLAlchemy models
-        routes/                 # Blueprints (one per feature area)
-        forms/                  # WTForms
-        services/
-            ai/                    # AIProviderManager + provider implementations
-            analytics/              # Profiling, cleaning, EDA, charts, anomalies, query executor
-            ml/                     # Pipelines, training, evaluation, explainability, job runner
-            forecasting/             # Trend/seasonality detection, forecasting
-            reports/                 # PDF/Excel/CSV/JSON export
-        templates/               # Jinja2 templates
-        static/                  # CSS/JS
-        utils/                   # tokens, email, ownership guard, activity logging
-    migrations/                # Alembic migration history
-    tests/                     # 332 tests across 29 files
-    data/
-        uploads/ processed/ models/ reports/
-    logs/
+│
+├── app.py
+├── config.py
+├── requirements.txt
+├── .env.example
+├── Dockerfile
+├── docker-compose.yml
+│
+├── app/
+│   ├── __init__.py
+│   ├── extensions.py
+│   ├── cli.py
+│   │
+│   ├── models/
+│   │
+│   ├── routes/
+│   │
+│   ├── forms/
+│   │
+│   ├── services/
+│   │   ├── ai/
+│   │   ├── analytics/
+│   │   ├── ml/
+│   │   ├── forecasting/
+│   │   └── reports/
+│   │
+│   ├── templates/
+│   │
+│   ├── static/
+│   │
+│   └── utils/
+│
+├── migrations/
+│
+├── tests/
+│
+├── data/
+│   ├── uploads/
+│   ├── processed/
+│   ├── models/
+│   └── reports/
+│
+├── screenshots/
+│   ├── dashboard.png
+│   ├── dataset-analysis.png
+│   ├── eda.png
+│   ├── ai-qa.png
+│   ├── ml-models.png
+│   ├── forecasting.png
+│   └── reports.png
+│
+└── logs/
 ```
 
 ---
 
-## Installation
+# ⚙️ Technology Stack
+
+### Backend
+
+* Python
+* Flask
+* Flask-SQLAlchemy
+* Flask-WTF
+* Flask-Migrate
+* Gunicorn
+
+### Data Science
+
+* Pandas
+* NumPy
+* scikit-learn
+* XGBoost
+* SHAP
+* Matplotlib
+* Seaborn
+
+### Database
+
+* SQLite
+* PostgreSQL
+
+### AI
+
+* Google Gemini
+* Groq
+* OpenRouter
+* Anthropic Claude
+* OpenAI
+
+### Frontend
+
+* HTML5
+* CSS3
+* JavaScript
+* Bootstrap
+* Jinja2
+
+### Infrastructure
+
+* Docker
+* Docker Compose
+* Redis
+* SMTP
+
+---
+
+# 💻 Installation
+
+## 1. Clone the repository
 
 ```bash
-git clone <this-repo>
+git clone <your-repository-url>
 cd ai-business-analytics
+```
 
+## 2. Create a virtual environment
+
+### Linux / macOS
+
+```bash
 python3 -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
+source venv/bin/activate
+```
 
+### Windows
+
+```powershell
+python -m venv venv
+venv\Scripts\activate
+```
+
+## 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-## Environment configuration
+---
+
+# 🔐 Environment Configuration
+
+Create the environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set at minimum:
-- `SECRET_KEY` — a real random value. **The app will refuse to start in production with the default dev key.**
-- `DATABASE_URL` — leave blank for SQLite (auto-resolves to an absolute path under `data/`), or set a PostgreSQL URL (see below).
-- At least one AI provider key if you want the AI features (`GEMINI_API_KEY_1` is the simplest to start with).
-- `MAIL_*` — leave `MAIL_USERNAME` blank in development; emails are logged to `logs/app.log` instead of sent.
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` — used by `flask create-admin`.
+On Windows:
 
-All AI provider keys, model names, the fallback order, and per-user usage limits are environment-driven — adding a new provider or changing limits never requires touching business logic (though an admin can also live-edit limits and fallback order from the Admin panel without a restart).
+```powershell
+copy .env.example .env
+```
 
-## Database setup
+At minimum configure:
 
-**SQLite (default, zero setup):**
+```env
+SECRET_KEY=your-secure-secret-key
+
+DATABASE_URL=
+
+GEMINI_API_KEY_1=your-gemini-key
+GEMINI_API_KEY_2=
+GEMINI_API_KEY_3=
+GEMINI_API_KEY_4=
+
+AI_PROVIDER_ORDER=gemini,groq,openrouter,claude,openai
+
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change-this-password
+```
+
+Optional Redis:
+
+```env
+REDIS_URL=redis://localhost:6379/0
+```
+
+Optional email configuration:
+
+```env
+MAIL_SERVER=
+MAIL_PORT=
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_USE_TLS=
+MAIL_DEFAULT_SENDER=
+```
+
+> Never commit `.env` or real API keys to Git.
+
+---
+
+# 🗄️ Database Setup
+
+## SQLite
+
+SQLite is the default and requires no external database server.
+
 ```bash
-export FLASK_APP=app.py
 flask db upgrade
 ```
 
-**PostgreSQL:**
+## PostgreSQL
+
+Create a database:
+
 ```bash
-# 1. Create a database
 createdb ai_analytics
+```
 
-# 2. Point DATABASE_URL at it
-export DATABASE_URL="postgresql+psycopg2://user:password@localhost:5432/ai_analytics"
+Configure:
 
-# 3. Run the same migrations - no code changes needed
+```env
+DATABASE_URL=postgresql+psycopg2://user:password@localhost:5432/ai_analytics
+```
+
+Then run:
+
+```bash
 flask db upgrade
 ```
-This has been verified against a real PostgreSQL 16 instance (all 14 tables created correctly, full register -> upload -> dataset-persistence flow tested end to end) — not just structurally checked.
 
-**Bootstrap an admin account:**
+---
+
+# 👑 Create Administrator
+
+Set:
+
+```env
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your-secure-password
+```
+
+Then:
+
 ```bash
 flask create-admin
 ```
-Reads `ADMIN_EMAIL` / `ADMIN_PASSWORD` from your environment; safe to re-run (promotes an existing user if the email already exists).
 
-## Running locally
+The command is safe to run again and can promote an existing account.
+
+---
+
+# ▶️ Running Locally
+
+Start the application:
 
 ```bash
 flask run
-# or: python app.py
-```
-Visit `http://127.0.0.1:5000`.
-
-In dev mode (no `MAIL_USERNAME` set), verification/reset emails are logged instead of sent — look in `logs/app.log` (or your terminal) for a line like:
-```
-[EMAIL SUPPRESSED] to=[...] subject=Verify your email address
-...
-http://localhost/auth/verify-email/<token>
 ```
 
-## Testing
+Or:
+
+```bash
+python app.py
+```
+
+Open:
+
+```text
+http://127.0.0.1:5000
+```
+
+---
+
+# 📧 Development Email Behavior
+
+If SMTP credentials are not configured during development, verification and password-reset emails are logged instead of being sent.
+
+Check:
+
+```text
+logs/app.log
+```
+
+You may see:
+
+```text
+[EMAIL SUPPRESSED]
+```
+
+along with the generated verification/reset URL.
+
+---
+
+# 🧪 Testing
+
+Run the complete test suite:
 
 ```bash
 python -m pytest tests/ -v
 ```
 
-332 tests across 29 files, covering:
-- Full auth lifecycle (register -> verify -> login -> reset -> change password -> delete) and cross-user data isolation on every resource type
-- Upload validation (extension whitelist, magic-byte sniffing, empty/binary rejection)
-- Data cleaning (each action in isolation, immutability of the source data)
-- EDA/chart-builder correctness against known aggregation results
-- AI provider manager: key rotation under simulated failures, fallback ordering, cache hit/miss, usage-limit enforcement — with a real DB-backed run confirming actual `AIUsage` rows and limit blocking
-- The AI Data Analyst's "never invent a number" guarantee, asserted explicitly (the computed value is checked to appear in what's passed to the explanation call)
-- Anomaly detection against datasets with deliberately injected, known outliers
-- ML training end-to-end through the real background thread pool (not mocked) — kickoff -> poll -> completion -> best-model ranking -> prediction
-- Forecasting against synthetic data with known trend/seasonality
-- Report generation: all 4 export formats verified as genuinely valid files (PDF parsed and page-counted, Excel sheet names checked, JSON round-tripped)
-- Admin access control on every route, and an explicit test that a realistic-looking API key never appears in the rendered admin page
+Current test status:
 
-## Deployment
+```text
+332 tests
+29 test files
+```
 
-### Docker (recommended)
+The test suite covers:
+
+* Authentication lifecycle
+* Email verification
+* Password reset
+* Password changes
+* Account deletion
+* Cross-user data isolation
+* File validation
+* Magic-byte validation
+* Data cleaning
+* Dataset immutability
+* EDA
+* Chart calculations
+* AI provider rotation
+* AI fallback
+* AI caching
+* AI usage limits
+* AI numerical-grounding behavior
+* Anomaly detection
+* ML training
+* Model ranking
+* Prediction
+* Forecasting
+* Report generation
+* PDF validation
+* Excel validation
+* JSON round-tripping
+* Admin authorization
+* API-key exposure prevention
+
+---
+
+# 🐳 Docker Deployment
+
+Docker Compose provides an application and PostgreSQL database.
 
 ```bash
 cp .env.example .env
-# Edit .env: set a real SECRET_KEY and at least one AI provider key.
-# Leave DATABASE_URL blank — docker-compose overrides it to point at
-# the bundled Postgres service automatically.
+```
 
+Configure your environment and then:
+
+```bash
 docker compose up --build
 ```
 
-This starts two containers: `web` (the Flask app behind gunicorn, 4 workers) and `db` (PostgreSQL 16). On startup, `web` automatically waits for the database, runs `flask db upgrade`, and — if `ADMIN_EMAIL`/`ADMIN_PASSWORD` are set in `.env` — bootstraps the admin account, before starting the server. Visit `http://localhost:8000`.
+The application will be available at:
 
-Data persists across restarts via named volumes (`postgres_data`, `app_data` for uploads/models/reports, `app_logs`). To stop: `docker compose down` (add `-v` to also wipe the volumes).
+```text
+http://localhost:8000
+```
 
-**Note on verification:** the Dockerfile and compose file have been validated for YAML/shell syntax correctness and reviewed line-by-line against known gotchas for this dependency set (XGBoost needs `libgomp1`, psycopg2 needs `libpq5`, both included) — but a full build-and-run wasn't possible in the environment this was developed in due to a network restriction on reaching Docker Hub. If you hit a build issue on a real machine, it's most likely a missing system library for one of the heavier scientific packages (pandas/sklearn/xgboost/shap/matplotlib) — please report it and it can be added to the `apt-get install` line in the Dockerfile.
+The stack includes:
 
-### Manual (gunicorn + reverse proxy)
+```text
+┌──────────────────────────────┐
+│          Docker              │
+│                              │
+│  ┌────────────┐              │
+│  │ Flask/Web  │              │
+│  │ Gunicorn   │              │
+│  └─────┬──────┘              │
+│        │                     │
+│  ┌─────▼──────┐              │
+│  │ PostgreSQL │              │
+│  └────────────┘              │
+│                              │
+└──────────────────────────────┘
+```
 
-**WSGI entry point:** `app.py` exposes `app`, usable directly with gunicorn:
+Data is persisted using Docker volumes.
+
+Stop the application:
+
 ```bash
-export FLASK_ENV=production
+docker compose down
+```
+
+To remove volumes as well:
+
+```bash
+docker compose down -v
+```
+
+---
+
+# 🌐 Production Deployment
+
+For production:
+
+1. Set a strong `SECRET_KEY`
+2. Use PostgreSQL
+3. Configure SMTP
+4. Configure production AI providers
+5. Use HTTPS
+6. Put Nginx or Caddy in front of Gunicorn
+7. Configure Redis for shared caching
+8. Configure shared rate-limit storage
+9. Schedule temporary-upload cleanup
+10. Back up the database and application data
+
+Example Gunicorn command:
+
+```bash
 gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ```
-Put a reverse proxy (nginx, Caddy) in front for TLS termination and static file serving.
 
-**Before deploying:**
-1. Set `FLASK_ENV=production` and a real `SECRET_KEY` — the app validates this at startup and refuses to run with the dev default.
-2. Point `DATABASE_URL` at PostgreSQL.
-3. Set real `MAIL_*` credentials so verification/reset emails actually send.
-4. Set real AI provider keys if AI features are wanted.
-5. Consider moving `RATELIMIT_STORAGE_URI` off `memory://` to Redis if running multiple workers (rate limits are currently per-process).
-6. Schedule `flask cleanup-temp-uploads` to run periodically (e.g. hourly via cron) — it deletes temp files from abandoned uploads (previewed but never committed) older than `DATASET_TEMP_MAX_AGE_HOURS` (default 24h). Safe to run repeatedly; a no-op if nothing is stale. Example crontab entry:
-   ```
-   0 * * * * cd /path/to/ai-business-analytics && /path/to/venv/bin/flask cleanup-temp-uploads >> logs/cleanup.log 2>&1
-   ```
+---
 
-**Known multi-worker limitation (documented, not silently ignored):** the ML background thread pool still lives in-process per worker — training runs are only visible to the worker that started them. Gemini key rotation and the AI response cache are no longer subject to this: setting `REDIS_URL` (the `docker compose` stack does this automatically) shares both correctly across every worker/container. Set `RATELIMIT_STORAGE_URI` to the same Redis instance too if running multiple workers, so rate limits are also shared rather than per-process.
+# ⚠️ Known Architecture Limitation
 
-## Security
+The current ML job runner uses an in-process `ThreadPoolExecutor`.
 
-- Passwords hashed with Werkzeug (never stored or logged in plaintext).
-- Email verification required before login; forgot/reset password flows never reveal whether an email is registered.
-- CSRF protection on every form (Flask-WTF), including AJAX requests via the `X-CSRFToken` header.
-- Rate limiting on auth endpoints, uploads, AI chat/insights, and ML training kickoff (the most resource-intensive endpoint in the app).
-- Upload validation: extension whitelist plus magic-byte sniffing (a renamed `.exe` claiming to be `.csv` is rejected), file-size limits, and per-user isolated temp/permanent storage.
-- SQL injection: not applicable — every query goes through the SQLAlchemy ORM, no raw SQL anywhere in the codebase.
-- XSS: Jinja2 auto-escaping everywhere server-side; all dynamically-inserted values in JavaScript (including user-controlled data like uploaded-file column names) go through an explicit `escapeHtml()` helper.
-- Secure cookies (`HttpOnly`, `SameSite=Lax`, `Secure` in production).
-- `SECRET_KEY` validated at startup — the app refuses to start in production with the insecure development default.
-- Report download filenames are sanitized (`secure_filename`) independent of the actual (always server-controlled) file path.
-- Errors are logged server-side; users never see a stack trace (custom 404/403/413/500 pages).
-- The AI layer never sends passwords/auth data to any provider, never executes AI-generated code, and only ever sends a bounded, pre-computed summary of a dataset — never the raw dataset itself.
-- Admin panel: every route gated behind `is_admin`, tested for both anonymous and non-admin access; API keys are never rendered anywhere in the UI, even to admins (only a 4-character key suffix, for identification).
+This means that with multiple Gunicorn workers, an ML training job belongs to the worker that started it.
 
-## Future improvements
+For a larger production deployment, the recommended improvement is:
 
-- Replace the `ThreadPoolExecutor`-based ML job runner with Celery/RQ for true multi-process background processing and job persistence across restarts.
-- Object storage (S3-compatible) backend for uploads/models/reports — the storage layer is already abstracted behind `LocalStorage`, so this is a swap-in, not a rewrite.
-- Real-time SHAP explanations capped more intelligently for very large datasets (currently a fixed sample-size cap).
+```text
+Flask
+  ↓
+Celery / RQ
+  ↓
+Redis
+  ↓
+ML Worker
+```
 
-## License
+The ML business logic is already separated from the invocation mechanism, so moving to Celery/RQ does not require rewriting the core training pipeline.
 
-MIT
+---
+
+# 📊 Production Considerations
+
+For larger deployments, consider:
+
+* PostgreSQL
+* Redis
+* Celery/RQ
+* S3-compatible object storage
+* Nginx/Caddy
+* Horizontal worker scaling
+* Centralized logging
+* Monitoring
+* Automated database backups
+
+---
+
+# 🛣️ Future Improvements
+
+Planned improvements include:
+
+* [ ] Celery/RQ-based persistent ML jobs
+* [ ] S3-compatible object storage
+* [ ] More advanced SHAP sampling
+* [ ] Larger-dataset optimization
+* [ ] More forecasting algorithms
+* [ ] Additional AI providers
+* [ ] Advanced dashboard customization
+* [ ] Scheduled reports
+* [ ] More business-specific analytics templates
+
+---
+
+# 🏆 Project Highlights
+
+This project demonstrates practical implementation of:
+
+```text
+Full-Stack Web Development
+        +
+Data Engineering
+        +
+Exploratory Data Analysis
+        +
+Artificial Intelligence
+        +
+Machine Learning
+        +
+Time-Series Forecasting
+        +
+Explainable AI
+        +
+Secure SaaS Architecture
+        +
+Multi-Provider LLM Architecture
+```
+
+It is designed not merely as an AI demo, but as a complete analytical application with authentication, data isolation, security, background processing, testing, reporting, and deployment considerations.
+
+---
+
+# 📌 Design Principles
+
+### 1. Data First
+
+All numerical answers should originate from actual dataset computations.
+
+### 2. Security by Default
+
+User data, credentials, uploaded files, and AI credentials are isolated and protected.
+
+### 3. Provider Independence
+
+AI functionality should not depend on a single LLM provider.
+
+### 4. Original Data Preservation
+
+Cleaning operations never overwrite the source dataset.
+
+### 5. Leakage-Safe Machine Learning
+
+Preprocessing belongs inside the ML pipeline.
+
+### 6. Production-Oriented Architecture
+
+The project is structured so individual components can be replaced or scaled independently.
+
+---
+
+# 📜 License
+
+This project is licensed under the **MIT License**.
+
+---
+
+# 👨‍💻 Author
+
+**Abaid-ur-Rehman**
+
+Machine Learning Engineer | Python Developer | AI & Computer Vision Enthusiast
+
+---
+
+## ⭐ Support the Project
+
+If you find this project useful:
+
+* ⭐ Star the repository
+* 🍴 Fork the project
+* 🐛 Report issues
+* 💡 Suggest improvements
+* 🔧 Submit pull requests
+
+---
+
+<p align="center">
+
+**Built with Python • Flask • Pandas • scikit-learn • XGBoost • SHAP • Google Gemini**
+
+**Smarter Data. Deeper Insights. Better Decisions.**
+
+</p>
